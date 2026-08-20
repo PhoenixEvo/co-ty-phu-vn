@@ -16,14 +16,14 @@ export default function PlayerToken({ color, name, isCurrent, isMe, isStepping }
     <motion.div
       layout
       transition={{ 
-        layout: { duration: 0.45, ease: 'easeInOut' },
+        layout: { duration: 0.58, ease: 'easeInOut' },
         type: 'spring', 
-        damping: 15, 
-        stiffness: 160 
+        damping: 14, 
+        stiffness: 140 
       }}
       animate={isStepping ? {
-        scale: [1, 1.4, 1],
-        y: [0, -18, 0],
+        scale: [1, 1.45, 1],
+        y: [0, -22, 0],
       } : isCurrent ? {
         y: [0, -4, 0],
       } : {

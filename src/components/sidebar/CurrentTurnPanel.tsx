@@ -4,7 +4,8 @@ import { useState } from 'react';
 import { GameState, Player } from '@/game/types';
 import Dice3D from '../ui/Dice3D';
 import { sounds } from '@/utils/sound';
-import { Dices, Sparkles, Clock, Footprints } from 'lucide-react';
+import { formatMoney } from '@/utils/format';
+import { Dices, Sparkles, Clock, Footprints, ShieldAlert, KeyRound } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 interface CurrentTurnPanelProps {
@@ -31,6 +32,11 @@ export default function CurrentTurnPanel({ state, playerId, dispatch, isMoving =
       setIsRollingAnimation(false);
       dispatch({ type: 'ROLL_DICE' });
     }, 900);
+  };
+
+  const handlePayJailFine = () => {
+    sounds.playMoneyPay();
+    dispatch({ type: 'PAY_JAIL_FINE' });
   };
 
   if (!currentPlayer) return null;
@@ -76,30 +82,65 @@ export default function CurrentTurnPanel({ state, playerId, dispatch, isMoving =
         </div>
       </div>
 
+      {/* Jail Banner if in Jail */}
+      {currentPlayer.inJail && (
+        <div className="my-2 p-2.5 bg-red-950/50 border border-red-800/60 rounded-xl text-center">
+          <span className="text-xs font-bold text-red-200 flex items-center justify-center gap-1.5">
+            <ShieldAlert size={14} className="text-red-400" />
+            {isMyTurn ? 'Bạn đang ở trong tù! (Lượt ' + (currentPlayer.jailTurns + 1) + '/3)' : currentPlayer.nickname + ' đang ở trong tù!'}
+          </span>
+        </div>
+      )}
+
       {/* 3D Dice Display with Total Score */}
-      <div className="py-3">
+      <div className="py-2">
         <Dice3D 
           dice={state.lastDice || [1, 1]} 
           isRolling={isRollingAnimation} 
         />
       </div>
 
-      {/* Main Roll Dice Button */}
+      {/* Main Buttons */}
       {isMyTurn && state.turnState === 'AWAITING_ROLL' && (
-        <motion.button
-          whileHover={{ scale: isMoving ? 1 : 1.02 }}
-          whileTap={{ scale: isMoving ? 1 : 0.98 }}
-          onClick={handleRollDice}
-          disabled={isRollingAnimation || isMoving}
-          className={`w-full py-3.5 px-4 font-black text-base rounded-xl shadow-xl transition-all flex items-center justify-center gap-2 ${
-            isMoving 
-              ? 'bg-slate-800 text-slate-500 cursor-not-allowed border border-slate-700' 
-              : 'bg-linear-to-r from-amber-500 via-amber-400 to-amber-500 hover:from-amber-400 hover:to-amber-300 text-slate-950 shadow-amber-500/25 cursor-pointer border border-amber-300/40'
-          }`}
-        >
-          <Dices size={20} className={isRollingAnimation ? 'animate-spin' : ''} />
-          <span>{isRollingAnimation ? 'ĐANG LẮC XÚC XẮC...' : isMoving ? 'ĐANG BƯỚC ĐI...' : 'ĐỔ XÚC XẮC 🎲'}</span>
-        </motion.button>
+        <div className="space-y-2">
+          {/* Roll Dice Button */}
+          <motion.button
+            whileHover={{ scale: isMoving ? 1 : 1.02 }}
+            whileTap={{ scale: isMoving ? 1 : 0.98 }}
+            onClick={handleRollDice}
+            disabled={isRollingAnimation || isMoving}
+            className={`w-full py-3.5 px-4 font-black text-base rounded-xl shadow-xl transition-all flex items-center justify-center gap-2 ${
+              isMoving 
+                ? 'bg-slate-800 text-slate-500 cursor-not-allowed border border-slate-700' 
+                : 'bg-linear-to-r from-amber-500 via-amber-400 to-amber-500 hover:from-amber-400 hover:to-amber-300 text-slate-950 shadow-amber-500/25 cursor-pointer border border-amber-300/40'
+            }`}
+          >
+            <Dices size={20} className={isRollingAnimation ? 'animate-spin' : ''} />
+            <span>
+              {isRollingAnimation 
+                ? 'ĐANG LẮC XÚC XẮC...' 
+                : isMoving 
+                  ? 'ĐANG BƯỚC ĐI...' 
+                  : currentPlayer.inJail 
+                    ? 'ĐỔ TÌM ĐÔI RA TÙ 🎲' 
+                    : 'ĐỔ XÚC XẮC 🎲'}
+            </span>
+          </motion.button>
+
+          {/* Pay Bail to Get Out of Jail Immediately */}
+          {currentPlayer.inJail && !isMoving && (
+            <motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              onClick={handlePayJailFine}
+              disabled={currentPlayer.money < 500_000 || isRollingAnimation}
+              className="w-full py-2.5 px-3 bg-linear-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 disabled:opacity-40 text-white font-black text-xs rounded-xl shadow-lg transition-all flex items-center justify-center gap-1.5 border border-emerald-400/40 cursor-pointer"
+            >
+              <KeyRound size={15} />
+              <span>NỘP PHÍ BẢO LÃNH RA TÙ (500.000 ₫)</span>
+            </motion.button>
+          )}
+        </div>
       )}
 
       {!isMyTurn && (

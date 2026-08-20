@@ -173,6 +173,8 @@ export default function GameBoard({
         space={selectedSpace} 
         state={state} 
         onClose={() => setSelectedSpace(null)} 
+        dispatch={dispatch}
+        playerId={playerId}
       />
     </>
   );

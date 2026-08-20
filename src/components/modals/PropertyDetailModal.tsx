@@ -3,20 +3,42 @@
 import { BoardSpace, PropertySpace, TransportSpace, UtilitySpace, GameState } from '@/game/types';
 import { getLocationArtwork } from '@/game/locationArtworks';
 import { formatMoney } from '@/utils/format';
-import { X, Building2, User, DollarSign, MapPin, Sparkles } from 'lucide-react';
+import { sounds } from '@/utils/sound';
+import { X, Building2, User, DollarSign, MapPin, Sparkles, AlertTriangle, ShieldCheck, KeyRound } from 'lucide-react';
 
 interface PropertyDetailModalProps {
   space: BoardSpace | null;
   state: GameState;
   onClose: () => void;
+  dispatch?: any;
+  playerId?: string;
 }
 
-export default function PropertyDetailModal({ space, state, onClose }: PropertyDetailModalProps) {
+export default function PropertyDetailModal({ space, state, onClose, dispatch, playerId }: PropertyDetailModalProps) {
   if (!space) return null;
 
   const ownership = state.properties[space.id];
   const owner = ownership ? state.players.find(p => p.id === ownership.ownerId) : null;
   const artwork = getLocationArtwork(space.id);
+  const isMine = owner && playerId && owner.id === playerId;
+  const isMortgaged = ownership?.isMortgaged || false;
+  const spacePrice = (space as any).price || 0;
+  const mortgageValue = Math.floor(spacePrice * 0.5);
+  const unmortgageCost = Math.floor(spacePrice * 0.55);
+
+  const me = state.players.find(p => p.id === playerId);
+
+  const handleMortgage = () => {
+    if (!dispatch || !isMine || isMortgaged) return;
+    sounds.playMoneyPay();
+    dispatch({ type: 'MORTGAGE_PROPERTY', payload: { spaceId: space.id } });
+  };
+
+  const handleUnmortgage = () => {
+    if (!dispatch || !isMine || !isMortgaged) return;
+    sounds.playBuyProperty();
+    dispatch({ type: 'UNMORTGAGE_PROPERTY', payload: { spaceId: space.id } });
+  };
 
   const getColorBg = (color?: string) => {
     switch (color) {
@@ -78,9 +100,9 @@ export default function PropertyDetailModal({ space, state, onClose }: PropertyD
             <h2 className="text-xl font-black uppercase tracking-wide">{space.name}</h2>
           </div>
           
-          {(space as any).price && (
+          {spacePrice > 0 && (
             <div className="text-xs font-bold mt-0.5 opacity-90 font-mono">
-              Giá niêm yết: {formatMoney((space as any).price)}
+              Giá niêm yết: {formatMoney(spacePrice)}
             </div>
           )}
         </div>
@@ -88,6 +110,14 @@ export default function PropertyDetailModal({ space, state, onClose }: PropertyD
         {/* Card Body */}
         <div className="p-4 space-y-3 text-sm overflow-y-auto max-h-[50vh]">
           
+          {/* Mortgaged Warning Banner */}
+          {isMortgaged && (
+            <div className="bg-amber-100 border border-amber-400 p-2 rounded-xl flex items-center gap-2 text-amber-900 text-xs font-bold shadow-xs">
+              <AlertTriangle size={16} className="text-amber-600 shrink-0" />
+              <span>Đang thế chấp ngân hàng — Không thu tiền thuê!</span>
+            </div>
+          )}
+
           {/* Subtitle & Cultural Quote */}
           {artwork?.subtitle && (
             <div className="bg-amber-50/80 border border-amber-200/80 p-2.5 rounded-xl space-y-1">
@@ -133,7 +163,7 @@ export default function PropertyDetailModal({ space, state, onClose }: PropertyD
                 </div>
               </div>
 
-              {/* Building costs */}
+              {/* Building costs & Mortgage */}
               <div className="grid grid-cols-2 gap-2 text-xs bg-slate-50 p-2 rounded-xl border border-slate-200">
                 <div>
                   <span className="text-slate-500 block text-[10px]">Chi phí xây nhà:</span>
@@ -141,7 +171,7 @@ export default function PropertyDetailModal({ space, state, onClose }: PropertyD
                 </div>
                 <div>
                   <span className="text-slate-500 block text-[10px]">Giá thế chấp:</span>
-                  <span className="font-bold text-slate-800 font-mono">{formatMoney(pSpace.price / 2)}</span>
+                  <span className="font-bold text-slate-800 font-mono">{formatMoney(mortgageValue)}</span>
                 </div>
               </div>
             </>
@@ -183,8 +213,10 @@ export default function PropertyDetailModal({ space, state, onClose }: PropertyD
                   <div className="w-3.5 h-3.5 rounded-full" style={{ backgroundColor: owner.tokenColor }}></div>
                   <span className="font-bold text-slate-900 text-xs">{owner.nickname}</span>
                 </div>
-                <span className="text-[10px] font-bold text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-md">
-                  {ownership?.houseCount === 5 ? '🏨 Khách sạn' : ownership?.houseCount ? `🏠 ${ownership.houseCount} Nhà` : 'Đã sở hữu'}
+                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md ${
+                  isMortgaged ? 'text-amber-700 bg-amber-100' : 'text-emerald-700 bg-emerald-100'
+                }`}>
+                  {isMortgaged ? '⚠️ Đang thế chấp' : ownership?.houseCount === 5 ? '🏨 Khách sạn' : ownership?.houseCount ? `🏠 ${ownership.houseCount} Nhà` : 'Đã sở hữu'}
                 </span>
               </div>
             ) : (
@@ -193,6 +225,30 @@ export default function PropertyDetailModal({ space, state, onClose }: PropertyD
               </div>
             )}
           </div>
+
+          {/* Mortgage / Unmortgage Action Buttons for Owner */}
+          {isMine && spacePrice > 0 && (
+            <div className="pt-2">
+              {isMortgaged ? (
+                <button
+                  onClick={handleUnmortgage}
+                  disabled={!me || me.money < unmortgageCost}
+                  className="w-full py-2.5 px-3 bg-linear-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 disabled:opacity-40 text-white font-black text-xs rounded-xl shadow-md transition flex items-center justify-center gap-1.5 cursor-pointer"
+                >
+                  <KeyRound size={15} />
+                  <span>CHUỘC LẠI / GIẢI CHẤP ({formatMoney(unmortgageCost)})</span>
+                </button>
+              ) : (
+                <button
+                  onClick={handleMortgage}
+                  className="w-full py-2.5 px-3 bg-slate-800 hover:bg-slate-700 text-amber-300 font-black text-xs rounded-xl border border-amber-400/40 shadow-md transition flex items-center justify-center gap-1.5 cursor-pointer"
+                >
+                  <DollarSign size={15} />
+                  <span>THẾ CHẤP BẤT ĐỘNG SẢN (+{formatMoney(mortgageValue)})</span>
+                </button>
+              )}
+            </div>
+          )}
         </div>
 
         {/* Footer */}

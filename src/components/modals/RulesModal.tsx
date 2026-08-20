@@ -58,6 +58,18 @@ export default function RulesModal({ onClose }: RulesModalProps) {
           <div className="space-y-1.5">
             <h4 className="font-black text-slate-900 flex items-center gap-2">
               <span className="w-5 h-5 rounded-full bg-red-600 text-white flex items-center justify-center text-xs">4</span>
+              Thế Chấp & Giải Chấp (Cầm Cố Đất)
+            </h4>
+            <p className="text-xs pl-7">
+              - Khi thiếu tiền mặt, bạn có thể <strong>Thế Chấp</strong> bất động sản để nhận lại <strong>50% giá mua</strong> từ ngân hàng.<br/>
+              - Đất đang thế chấp sẽ <strong>không thu tiền thuê</strong> của đối thủ.<br/>
+              - Bạn có thể <strong>Giải chấp (Chuộc lại)</strong> bất cứ lúc nào với chi phí bằng 55% giá trị đất (tiền gốc + 10% phí ngân hàng).
+            </p>
+          </div>
+
+          <div className="space-y-1.5">
+            <h4 className="font-black text-slate-900 flex items-center gap-2">
+              <span className="w-5 h-5 rounded-full bg-red-600 text-white flex items-center justify-center text-xs">5</span>
               Ô Bắt Đầu & Thuế
             </h4>
             <p className="text-xs pl-7">
@@ -67,11 +79,11 @@ export default function RulesModal({ onClose }: RulesModalProps) {
 
           <div className="space-y-1.5">
             <h4 className="font-black text-slate-900 flex items-center gap-2">
-              <span className="w-5 h-5 rounded-full bg-red-600 text-white flex items-center justify-center text-xs">5</span>
+              <span className="w-5 h-5 rounded-full bg-red-600 text-white flex items-center justify-center text-xs">6</span>
               Ở Tù & Ra Tù
             </h4>
             <p className="text-xs pl-7">
-              Khi ở tù, bạn có thể ra tù bằng cách: đổ được <strong>xúc xắc đôi</strong> trong lượt của mình, hoặc sau 3 lượt ở tù tự động nộp phạt <strong>500.000 ₫</strong> để được tự do.
+              Khi ở tù, bạn có thể: (1) Đổ xúc xắc tìm đôi miễn phí; hoặc (2) Nộp phí bảo lãnh <strong>500.000 ₫</strong> để ra tù ngay lập tức và đổ xúc xắc đi tiếp trong lượt đó! Nếu dừng chân tại ô số 10 khi di chuyển bình thường, bạn chỉ là <strong>Khách Thăm Tù</strong> và hoàn toàn tự do.
             </p>
           </div>
         </div>

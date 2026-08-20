@@ -83,7 +83,7 @@ export interface GameEvent {
   id: string;
   timestamp: number;
   message: string;
-  type?: 'roll' | 'buy' | 'upgrade' | 'rent' | 'tax' | 'card' | 'jail' | 'pass_go' | 'bankrupt';
+  type?: 'roll' | 'buy' | 'upgrade' | 'mortgage' | 'unmortgage' | 'rent' | 'tax' | 'card' | 'jail' | 'pass_go' | 'bankrupt';
   playerId?: string;
   amount?: number;
 }
@@ -131,10 +131,13 @@ export type ClientAction =
   | { type: 'JOIN_GAME'; payload: { nickname: string; tokenColor: string } }
   | { type: 'START_GAME' }
   | { type: 'ROLL_DICE' }
+  | { type: 'PAY_JAIL_FINE' }
   | { type: 'BUY_PROPERTY' }
   | { type: 'SKIP_BUY' }
   | { type: 'UPGRADE_PROPERTY' }
   | { type: 'SKIP_UPGRADE' }
+  | { type: 'MORTGAGE_PROPERTY'; payload: { spaceId: string } }
+  | { type: 'UNMORTGAGE_PROPERTY'; payload: { spaceId: string } }
   | { type: 'PAY_TAX'; payload?: { percentage: boolean } }
   | { type: 'DISMISS_CARD' }
   | { type: 'END_TURN' }

@@ -1,7 +1,7 @@
 export const MOVEMENT_CONFIG = {
-  stepDuration: 480,     // ms per step (slower, deliberate rhythm so players can clearly follow each tile)
+  stepDuration: 620,     // ms per step (ultra deliberate, rhythmic, crystal clear for all players)
   stepDelay: 250,        // ms delay before first step starts
-  landingDuration: 500,  // ms landing pause before resolving space / showing action
+  landingDuration: 600,  // ms landing pause before resolving space / showing action
 };
 
 /**
