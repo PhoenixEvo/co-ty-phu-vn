@@ -66,25 +66,25 @@ export const CHANCE_CARDS: Card[] = [
   {
     id: 'chance_7',
     type: 'chance',
-    title: 'Du Lịch Vịnh Hạ Long',
-    description: 'Đặt vé du thuyền tham quan di sản thiên nhiên thế giới Vịnh Hạ Long.',
-    icon: '⛵',
+    title: 'Khám Phá Phố Ẩm Thực',
+    description: 'Tiến thẳng đến đường Nguyễn Tri Phương để thưởng thức ẩm thực đêm sầm uất.',
+    icon: '🍜',
     effect: { type: 'move_to', targetPosition: 24 }
   },
   {
     id: 'chance_8',
     type: 'chance',
-    title: 'Khám Phá Cố Đô Huế',
-    description: 'Mua vé tàu hỏa ghé thăm Đại Nội và lăng tẩm Cố Đô Huế.',
-    icon: '🏯',
+    title: 'Thăm Bến Cảng Nhà Rồng',
+    description: 'Mua vé tham quan di tích lịch sử Bến Nhà Rồng trên đường Nguyễn Tất Thành.',
+    icon: '🚢',
     effect: { type: 'move_to', targetPosition: 11 }
   },
   {
     id: 'chance_9',
     type: 'chance',
-    title: 'Ghé Thăm Hồ Gươm',
-    description: 'Dừng chân ngắm Tháp Rùa và thưởng thức kem Tràng Tiền tại Hà Nội.',
-    icon: '🐢',
+    title: 'Đại Gia Bất Động Sản',
+    description: 'Tiến thẳng đến đại lộ Tân Kỳ Tân Quý — mảnh đất đắt giá nhất bàn cờ!',
+    icon: '💎',
     effect: { type: 'move_to', targetPosition: 39 }
   },
   {
@@ -130,9 +130,9 @@ export const CHANCE_CARDS: Card[] = [
   {
     id: 'chance_15',
     type: 'chance',
-    title: 'Cà Phê Nhà Thờ Đức Bà',
-    description: 'Hẹn gặp đối tác uống cà phê sáng tại khu vực Nhà Thờ Đức Bà.',
-    icon: '☕',
+    title: 'Mua Sắm Chợ Bến Thành',
+    description: 'Hẹn gặp đối tác và mua sắm trên trục đường danh giá Lê Lợi.',
+    icon: '🛍️',
     effect: { type: 'move_to', targetPosition: 3 }
   },
   {
@@ -301,9 +301,9 @@ export const FORTUNE_CARDS: Card[] = [
   {
     id: 'fortune_18',
     type: 'fortune',
-    title: 'Nghỉ Dưỡng Tại Đà Lạt',
-    description: 'Tiến thẳng lên thành phố ngàn hoa Đà Lạt để tận hưởng không khí trong lành.',
-    icon: '🌲',
+    title: 'Check-in Cầu Phú Mỹ',
+    description: 'Tiến thẳng đến đại lộ Huỳnh Tấn Phát để ngắm cầu Phú Mỹ rực rỡ về đêm.',
+    icon: '🌉',
     effect: { type: 'move_to', targetPosition: 19 }
   }
 ];
