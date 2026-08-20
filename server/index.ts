@@ -12,31 +12,36 @@ import { GameState, ClientAction } from '../src/game/types';
 dotenv.config();
 
 const dev = process.env.NODE_ENV !== 'production';
-const nextApp = next({ dev });
+const PORT = Number(process.env.PORT || 10000);
+
+const app = express();
+app.use(cors({ origin: '*' }));
+
+const server = http.createServer(app);
+
+// Initialize WebSocket server in noServer mode
+const wss = new WebSocketServer({ noServer: true });
+
+// CRITICAL: Register our WebSocket upgrade handler BEFORE Next.js gets a chance to.
+// Next.js 16.x auto-registers its own 'upgrade' handler via setupWebSocketHandler()
+// which would conflict with our /ws path. By using prependListener, we intercept first.
+server.prependListener('upgrade', (request, socket, head) => {
+  const { pathname } = new URL(request.url || '/', `http://${request.headers.host}`);
+  if (pathname === '/ws') {
+    // Mark this request as handled so Next.js's upgrade handler won't touch it
+    (request as any).__nextjsHandled = true;
+    wss.handleUpgrade(request, socket, head, (ws) => {
+      wss.emit('connection', ws, request);
+    });
+  }
+  // For non-/ws paths, let Next.js handle it (e.g. HMR in dev mode)
+});
+
+// Pass httpServer to next() so it knows about our server
+const nextApp = next({ dev, httpServer: server });
 const handle = nextApp.getRequestHandler();
 
 nextApp.prepare().then(() => {
-  const app = express();
-  app.use(cors({ origin: '*' }));
-
-  const server = http.createServer(app);
-
-  // Use noServer mode to prevent conflicts with Next.js upgrade handling
-  const wss = new WebSocketServer({ noServer: true });
-
-  // Manually handle HTTP upgrade events — only intercept /ws path
-  server.on('upgrade', (request, socket, head) => {
-    const { pathname } = new URL(request.url || '/', `http://${request.headers.host}`);
-    if (pathname === '/ws') {
-      wss.handleUpgrade(request, socket, head, (ws) => {
-        wss.emit('connection', ws, request);
-      });
-    } else {
-      // Let Next.js handle other upgrade requests (e.g. HMR in dev)
-      // Do NOT destroy the socket — Next.js needs it
-    }
-  });
-
   app.get('/health', (req, res) => {
     res.json({ status: 'ok', uptime: process.uptime() });
   });
@@ -175,9 +180,8 @@ nextApp.prepare().then(() => {
     clearInterval(interval);
   });
 
-  const PORT = process.env.PORT || 10000;
   initDb().then(() => {
-    server.listen(Number(PORT), '0.0.0.0', () => {
+    server.listen(PORT, '0.0.0.0', () => {
       console.log(`[SERVER] Game Server & Next.js Frontend listening on port ${PORT} (0.0.0.0)`);
       console.log(`[SERVER] WebSocket path: /ws`);
       console.log(`[SERVER] Health check: /health`);
