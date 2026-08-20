@@ -247,7 +247,7 @@ export function gameReducer(state: GameState, action: ClientAction, playerId: st
 
       draft.turnState = 'MOVING';
       
-      // Move player
+      // Move player to stepped space
       const nextPos = player.position + d1 + d2;
       if (nextPos >= 40) {
         player.money += draft.config.goSalary;
@@ -256,7 +256,7 @@ export function gameReducer(state: GameState, action: ClientAction, playerId: st
       }
       player.position = nextPos % 40;
 
-      // Resolve space
+      // Resolve stepped space
       draft.turnState = 'RESOLVING_SPACE';
       const space = BOARD_SPACES[player.position];
       logEvent(draft, `${player.nickname} đi đến ô ${space.name}.`);
@@ -312,29 +312,9 @@ export function gameReducer(state: GameState, action: ClientAction, playerId: st
       } else if (space.type === 'chance' || space.type === 'fortune') {
         const deck = space.type === 'chance' ? CHANCE_CARDS : FORTUNE_CARDS;
         const card = deck[Math.floor(Math.random() * deck.length)];
+        
+        // Save drawn card for the modal to display after player finishes physical stepping
         draft.lastDrawnCard = card;
-        
-        // Execute card effect
-        if (card.effect.type === 'money' && card.effect.amount) {
-          player.money += card.effect.amount;
-        } else if (card.effect.type === 'collect_from_all' && card.effect.amount) {
-          const amt = card.effect.amount;
-          draft.players.forEach(otherP => {
-            if (otherP.id !== player.id && !otherP.isBankrupt) {
-              otherP.money -= amt;
-              player.money += amt;
-            }
-          });
-        } else if (card.effect.type === 'move_to' && card.effect.targetPosition !== undefined) {
-          if (card.effect.targetPosition < player.position && card.effect.targetPosition !== 0) {
-            player.money += draft.config.goSalary;
-          }
-          player.position = card.effect.targetPosition;
-        } else if (card.effect.type === 'jail') {
-          player.position = 10;
-          player.inJail = true;
-        }
-        
         logEvent(draft, `${player.nickname} rút thẻ ${card.title}: ${card.description}`, 'card', playerId);
         setCenterBanner(draft, `🃏 ${card.title}`, 'card');
 
@@ -488,8 +468,117 @@ export function gameReducer(state: GameState, action: ClientAction, playerId: st
 
     case 'DISMISS_CARD': {
       if (draft.status !== 'playing' || !isCurrentTurn || draft.turnState !== 'AWAITING_ACTION') return draft;
-      draft.awaitingAction = null;
+      if (!player) return draft;
+
+      const card = draft.lastDrawnCard || draft.awaitingAction?.card;
       draft.lastDrawnCard = null;
+      draft.awaitingAction = null;
+
+      if (!card) {
+        nextPlayer(draft);
+        return draft;
+      }
+
+      // Execute card effect upon user dismissal
+      if (card.effect.type === 'money' && card.effect.amount) {
+        player.money += card.effect.amount;
+        if (player.money < 0) {
+          player.isBankrupt = true;
+          logEvent(draft, `${player.nickname} đã phá sản do không đủ tiền trả phí thẻ!`, 'bankrupt', playerId);
+        }
+        nextPlayer(draft);
+        return draft;
+      }
+
+      if (card.effect.type === 'collect_from_all' && card.effect.amount) {
+        const amt = card.effect.amount;
+        draft.players.forEach(otherP => {
+          if (otherP.id !== player.id && !otherP.isBankrupt) {
+            otherP.money -= amt;
+            player.money += amt;
+            if (otherP.money < 0) {
+              otherP.isBankrupt = true;
+            }
+          }
+        });
+        nextPlayer(draft);
+        return draft;
+      }
+
+      if (card.effect.type === 'jail') {
+        player.position = 10;
+        player.inJail = true;
+        logEvent(draft, `${player.nickname} bị đưa vào tù!`, 'jail', playerId);
+        setCenterBanner(draft, `🚓 ${player.nickname} BỊ VÀO TÙ!`, 'jail');
+        nextPlayer(draft);
+        return draft;
+      }
+
+      if (card.effect.type === 'move_to' && card.effect.targetPosition !== undefined) {
+        const targetPos = card.effect.targetPosition;
+        
+        // Pass GO bonus check
+        if (targetPos < player.position && targetPos !== 0) {
+          player.money += draft.config.goSalary;
+          logEvent(draft, `${player.nickname} đi qua Bắt Đầu và nhận ${formatMoney(draft.config.goSalary)}.`, 'pass_go', playerId, draft.config.goSalary);
+          setCenterBanner(draft, `💰 ${player.nickname} NHẬN LƯƠNG ${formatMoney(draft.config.goSalary)}`, 'pass_go');
+        }
+
+        player.position = targetPos;
+        const destSpace = BOARD_SPACES[targetPos];
+        logEvent(draft, `${player.nickname} dịch chuyển đến ${destSpace.name}.`);
+
+        // Resolve destination space now!
+        if (destSpace.type === 'property' || destSpace.type === 'transport' || destSpace.type === 'utility') {
+          const ownership = draft.properties[destSpace.id];
+          if (ownership) {
+            if (ownership.ownerId !== player.id) {
+              // Opponent property: Pay rent
+              const owner = draft.players.find(p => p.id === ownership.ownerId);
+              if (owner && !owner.inJail && !ownership.isMortgaged) {
+                const rent = calculateRent(draft, destSpace, 7);
+                player.money -= rent;
+                owner.money += rent;
+                logEvent(draft, `${player.nickname} trả ${formatMoney(rent)} tiền thuê cho ${owner.nickname}.`, 'rent', playerId, -rent);
+                setCenterBanner(draft, `💸 ${player.nickname} TRẢ ${formatMoney(rent)} TIỀN THUÊ`, 'rent');
+                if (player.money < 0) {
+                  player.isBankrupt = true;
+                }
+              }
+              nextPlayer(draft);
+              return draft;
+            } else {
+              // Own property: Allow upgrade if property and < 5 houses
+              if (destSpace.type === 'property' && !ownership.isMortgaged && ownership.houseCount < 5) {
+                draft.turnState = 'AWAITING_ACTION';
+                draft.awaitingAction = { type: 'upgrade_property', spaceIndex: targetPos };
+                return draft;
+              } else {
+                nextPlayer(draft);
+                return draft;
+              }
+            }
+          } else {
+            // Unowned space: ALLOW PLAYER TO BUY IT!
+            draft.turnState = 'AWAITING_ACTION';
+            draft.awaitingAction = { type: 'buy_property', spaceIndex: targetPos };
+            return draft;
+          }
+        } else if (destSpace.type === 'tax') {
+          draft.turnState = 'AWAITING_ACTION';
+          draft.awaitingAction = { type: 'pay_tax', spaceIndex: targetPos };
+          return draft;
+        } else if (destSpace.type === 'go_to_jail') {
+          player.position = 10;
+          player.inJail = true;
+          nextPlayer(draft);
+          return draft;
+        } else {
+          nextPlayer(draft);
+          return draft;
+        }
+      }
+
       nextPlayer(draft);
       return draft;
     }

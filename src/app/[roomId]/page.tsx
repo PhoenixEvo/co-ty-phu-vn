@@ -349,7 +349,7 @@ export default function RoomPage() {
       )}
 
       {/* 1. Chance & Fortune Card Draw Modal (Only display after movement finishes) */}
-      {!isMoving && gameState.lastDrawnCard && (
+      {!isMoving && gameState.lastDrawnCard && gameState.turnState === 'AWAITING_ACTION' && gameState.awaitingAction?.type === 'card_dismiss' && (
         <CardDrawModal 
           card={gameState.lastDrawnCard} 
           isMyTurn={isMyTurn}
