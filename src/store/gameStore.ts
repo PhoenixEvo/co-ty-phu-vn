@@ -33,7 +33,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
     const { transport: existingTransport, playerId } = get();
     if (existingTransport) existingTransport.close();
 
-    const host = process.env.NEXT_PUBLIC_GAME_SERVER_URL || 'localhost:10000';
+    const host = process.env.NEXT_PUBLIC_GAME_SERVER_URL || (typeof window !== 'undefined' ? window.location.host : 'localhost:10000');
     
     const transport = new GameTransport(host, roomId, playerId, (data) => {
       if (data.type === 'SYNC_STATE') {

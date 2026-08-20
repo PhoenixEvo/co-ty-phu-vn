@@ -4,21 +4,32 @@ import { WebSocketServer, WebSocket } from 'ws';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import { z } from 'zod';
+import next from 'next';
 import { initDb, loadGameState, saveGameState } from './db';
 import { createInitialState, gameReducer } from './engine';
 import { GameState, ClientAction } from '../src/game/types';
 
 dotenv.config();
 
-const app = express();
-app.use(cors({ origin: '*' })); // Should restrict in prod, but keeping simple for dev/migration
+const dev = process.env.NODE_ENV !== 'production';
+const nextApp = next({ dev });
+const handle = nextApp.getRequestHandler();
 
-const server = http.createServer(app);
-const wss = new WebSocketServer({ server, path: '/ws' });
+nextApp.prepare().then(() => {
+  const app = express();
+  app.use(cors({ origin: '*' })); // Should restrict in prod, but keeping simple for dev/migration
 
-app.get('/health', (req, res) => {
-  res.json({ status: 'ok', uptime: process.uptime() });
-});
+  const server = http.createServer(app);
+  const wss = new WebSocketServer({ server, path: '/ws' });
+
+  app.get('/health', (req, res) => {
+    res.json({ status: 'ok', uptime: process.uptime() });
+  });
+
+  // Serve Next.js frontend for all other routes
+  app.all('*', (req, res) => {
+    return handle(req, res);
+  });
 
 const ClientMessageSchema = z.object({
   type: z.literal('ACTION'),
@@ -140,9 +151,11 @@ wss.on('close', () => {
 const PORT = process.env.PORT || 10000;
 initDb().then(() => {
   server.listen(Number(PORT), '0.0.0.0', () => {
-    console.log(`Node.js WebSocket Game Server listening on port ${PORT} (0.0.0.0)`);
+    console.log(`Node.js WebSocket Game Server & Next.js Frontend listening on port ${PORT} (0.0.0.0)`);
   });
 }).catch(err => {
   console.error('Failed to initialize database', err);
   process.exit(1);
+});
+
 });
