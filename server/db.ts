@@ -116,7 +116,7 @@ export async function saveGameState(state: GameState, expectedRevision: number, 
     if (eventType) {
       await client.query(
         'INSERT INTO game_events (game_id, revision, event_type, payload) VALUES ($1, $2, $3, $4)',
-        [state.roomId, nextRevision, eventType, eventPayload]
+        [state.roomId, nextRevision, eventType, eventPayload ?? null]
       );
     }
 
