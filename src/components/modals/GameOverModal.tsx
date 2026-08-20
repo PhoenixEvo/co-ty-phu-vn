@@ -4,6 +4,7 @@ import { GameState } from '@/game/types';
 import { Trophy, Crown, RotateCcw, Home, Bus, DollarSign } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { BOARD_SPACES } from '@/game/boardConfig';
+import { formatMoney } from '@/utils/format';
 
 interface GameOverModalProps {
   state: GameState;
@@ -56,7 +57,7 @@ export default function GameOverModal({ state, onRestart, onLeave }: GameOverMod
         <div className="grid grid-cols-3 gap-2 bg-slate-800/80 p-4 rounded-2xl border border-slate-700/80 mb-6">
           <div>
             <div className="text-[11px] text-slate-400 font-semibold mb-1">💰 Tiền mặt</div>
-            <div className="font-mono font-black text-lg text-emerald-400">${winner.money}</div>
+            <div className="font-mono font-black text-base md:text-lg text-emerald-400">{formatMoney(winner.money)}</div>
           </div>
           <div>
             <div className="text-[11px] text-slate-400 font-semibold mb-1">🏠 Đất sở hữu</div>

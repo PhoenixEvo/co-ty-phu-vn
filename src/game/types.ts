@@ -75,7 +75,7 @@ export interface Player {
 
 export interface PropertyOwnership {
   ownerId: string;
-  houseCount: number;
+  houseCount: number; // 0 = Land, 1-4 = 1-4 Houses, 5 = Hotel
   isMortgaged: boolean;
 }
 
@@ -83,7 +83,7 @@ export interface GameEvent {
   id: string;
   timestamp: number;
   message: string;
-  type?: 'roll' | 'buy' | 'rent' | 'tax' | 'card' | 'jail' | 'pass_go' | 'bankrupt';
+  type?: 'roll' | 'buy' | 'upgrade' | 'rent' | 'tax' | 'card' | 'jail' | 'pass_go' | 'bankrupt';
   playerId?: string;
   amount?: number;
 }
@@ -118,10 +118,10 @@ export interface GameState {
   lastCenterBanner?: {
     id: string;
     text: string;
-    type: 'buy' | 'rent' | 'card' | 'tax' | 'jail' | 'pass_go';
+    type: 'buy' | 'upgrade' | 'rent' | 'card' | 'tax' | 'jail' | 'pass_go';
   } | null;
   awaitingAction?: {
-    type: 'buy_property' | 'pay_tax' | 'card_dismiss';
+    type: 'buy_property' | 'upgrade_property' | 'pay_tax' | 'card_dismiss';
     spaceIndex?: number;
     card?: Card;
   } | null;
@@ -133,8 +133,9 @@ export type ClientAction =
   | { type: 'ROLL_DICE' }
   | { type: 'BUY_PROPERTY' }
   | { type: 'SKIP_BUY' }
+  | { type: 'UPGRADE_PROPERTY' }
+  | { type: 'SKIP_UPGRADE' }
   | { type: 'PAY_TAX'; payload?: { percentage: boolean } }
   | { type: 'DISMISS_CARD' }
   | { type: 'END_TURN' }
   | { type: 'LEAVE_GAME' };
-

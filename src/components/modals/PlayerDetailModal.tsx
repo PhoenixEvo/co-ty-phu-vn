@@ -2,6 +2,7 @@
 
 import { Player, GameState, PropertySpace, TransportSpace } from '@/game/types';
 import { BOARD_SPACES } from '@/game/boardConfig';
+import { formatMoney } from '@/utils/format';
 import { X, Building, Bus, DollarSign, Wallet, ShieldAlert } from 'lucide-react';
 
 interface PlayerDetailModalProps {
@@ -19,9 +20,16 @@ export default function PlayerDetailModal({ player, state, onClose }: PlayerDeta
   const transports = ownedSpaces.filter(s => s.type === 'transport') as TransportSpace[];
   const utilities = ownedSpaces.filter(s => s.type === 'utility');
 
-  // Total net worth = cash + total property purchase price
-  const propertyWorth = ownedSpaces.reduce((sum, s) => sum + ((s as any).price || 0), 0);
-  const totalNetWorth = player.money + propertyWorth;
+  // Total net worth = cash + total property purchase price + total house investments
+  const propertyWorth = properties.reduce((sum, p) => {
+    const hCount = state.properties[p.id]?.houseCount || 0;
+    const houseInvestment = hCount * p.houseCost;
+    return sum + p.price + houseInvestment;
+  }, 0);
+
+  const transportWorth = transports.reduce((sum, t) => sum + t.price, 0);
+  const utilityWorth = utilities.reduce((sum, u) => sum + (u as any).price, 0);
+  const totalNetWorth = player.money + propertyWorth + transportWorth + utilityWorth;
 
   const getColorBg = (color?: string) => {
     switch (color) {
@@ -77,8 +85,8 @@ export default function PlayerDetailModal({ player, state, onClose }: PlayerDeta
             <div className="text-xs text-slate-500 font-semibold flex items-center gap-1.5 mb-1">
               <Wallet size={14} className="text-emerald-600" /> Tiền mặt
             </div>
-            <div className="text-2xl font-black font-mono text-emerald-600">
-              ${player.money}
+            <div className="text-xl font-black font-mono text-emerald-600">
+              {formatMoney(player.money)}
             </div>
           </div>
 
@@ -86,8 +94,8 @@ export default function PlayerDetailModal({ player, state, onClose }: PlayerDeta
             <div className="text-xs text-slate-500 font-semibold flex items-center gap-1.5 mb-1">
               <DollarSign size={14} className="text-blue-600" /> Tổng tài sản
             </div>
-            <div className="text-2xl font-black font-mono text-blue-700">
-              ${totalNetWorth}
+            <div className="text-xl font-black font-mono text-blue-700">
+              {formatMoney(totalNetWorth)}
             </div>
           </div>
         </div>
@@ -97,25 +105,32 @@ export default function PlayerDetailModal({ player, state, onClose }: PlayerDeta
           <div>
             <div className="text-xs font-bold uppercase text-slate-400 tracking-wider mb-2 flex items-center justify-between">
               <span>Bất động sản ({properties.length})</span>
-              <span className="text-slate-500 font-mono text-[11px]">Giá trị: ${properties.reduce((s, p) => s + p.price, 0)}</span>
             </div>
             {properties.length === 0 ? (
               <p className="text-xs text-slate-400 italic bg-slate-50 p-3 rounded-lg border border-dashed border-slate-200 text-center">Chưa sở hữu bất động sản nào</p>
             ) : (
               <div className="grid grid-cols-2 gap-2">
-                {properties.map(p => (
-                  <div key={p.id} className="flex items-center gap-2 p-2 rounded-lg border border-slate-200 bg-slate-50 text-xs font-semibold">
-                    <div className={`w-3 h-3 rounded-full shrink-0 ${getColorBg(p.colorGroup)}`} />
-                    <span className="truncate">{p.name}</span>
-                  </div>
-                ))}
+                {properties.map(p => {
+                  const hCount = state.properties[p.id]?.houseCount || 0;
+                  return (
+                    <div key={p.id} className="flex items-center justify-between p-2 rounded-lg border border-slate-200 bg-slate-50 text-xs font-semibold">
+                      <div className="flex items-center gap-1.5 min-w-0">
+                        <div className={`w-3 h-3 rounded-full shrink-0 ${getColorBg(p.colorGroup)}`} />
+                        <span className="truncate">{p.name}</span>
+                      </div>
+                      <span className="text-[10px] font-bold shrink-0 text-amber-700">
+                        {hCount === 5 ? '🏨' : hCount > 0 ? `🏠x${hCount}` : ''}
+                      </span>
+                    </div>
+                  );
+                })}
               </div>
             )}
           </div>
 
           <div>
             <div className="text-xs font-bold uppercase text-slate-400 tracking-wider mb-2 flex items-center justify-between">
-              <span>Bến xe & Cơ sở hạ tầng ({transports.length + utilities.length})</span>
+              <span>Bến xe & Tiện ích ({transports.length + utilities.length})</span>
             </div>
             {transports.length + utilities.length === 0 ? (
               <p className="text-xs text-slate-400 italic bg-slate-50 p-3 rounded-lg border border-dashed border-slate-200 text-center">Chưa sở hữu bến xe hay nhà máy nào</p>
@@ -142,7 +157,7 @@ export default function PlayerDetailModal({ player, state, onClose }: PlayerDeta
         <div className="p-3 bg-slate-50 border-t border-slate-200 text-center">
           <button 
             onClick={onClose}
-            className="w-full py-2.5 bg-slate-800 hover:bg-slate-900 text-white font-bold rounded-xl transition"
+            className="w-full py-2.5 bg-slate-800 hover:bg-slate-900 text-white font-bold rounded-xl transition cursor-pointer"
           >
             Đóng
           </button>

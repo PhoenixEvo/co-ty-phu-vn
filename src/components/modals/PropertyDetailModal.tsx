@@ -2,6 +2,7 @@
 
 import { BoardSpace, PropertySpace, TransportSpace, UtilitySpace, GameState } from '@/game/types';
 import { getLocationArtwork } from '@/game/locationArtworks';
+import { formatMoney } from '@/utils/format';
 import { X, Building2, User, DollarSign, MapPin, Sparkles } from 'lucide-react';
 
 interface PropertyDetailModalProps {
@@ -79,7 +80,7 @@ export default function PropertyDetailModal({ space, state, onClose }: PropertyD
           
           {(space as any).price && (
             <div className="text-xs font-bold mt-0.5 opacity-90 font-mono">
-              Giá niêm yết: ${(space as any).price}
+              Giá niêm yết: {formatMoney((space as any).price)}
             </div>
           )}
         </div>
@@ -108,27 +109,27 @@ export default function PropertyDetailModal({ space, state, onClose }: PropertyD
               <div className="space-y-1.5 border-b border-slate-200 pb-3 text-xs">
                 <div className="flex justify-between items-center font-bold text-slate-900 text-sm">
                   <span>Tiền thuê đất:</span>
-                  <span className="font-mono text-base font-black">${pSpace.baseRent}</span>
+                  <span className="font-mono text-sm font-black">{formatMoney(pSpace.baseRent)}</span>
                 </div>
                 <div className="flex justify-between items-center text-slate-600">
                   <span>Với 1 Nhà 🏠:</span>
-                  <span className="font-mono font-medium">${pSpace.houseRents[0]}</span>
+                  <span className="font-mono font-medium">{formatMoney(pSpace.houseRents[0])}</span>
                 </div>
                 <div className="flex justify-between items-center text-slate-600">
                   <span>Với 2 Nhà 🏠🏠:</span>
-                  <span className="font-mono font-medium">${pSpace.houseRents[1]}</span>
+                  <span className="font-mono font-medium">{formatMoney(pSpace.houseRents[1])}</span>
                 </div>
                 <div className="flex justify-between items-center text-slate-600">
                   <span>Với 3 Nhà 🏠🏠🏠:</span>
-                  <span className="font-mono font-medium">${pSpace.houseRents[2]}</span>
+                  <span className="font-mono font-medium">{formatMoney(pSpace.houseRents[2])}</span>
                 </div>
                 <div className="flex justify-between items-center text-slate-600">
                   <span>Với 4 Nhà 🏠🏠🏠🏠:</span>
-                  <span className="font-mono font-medium">${pSpace.houseRents[3]}</span>
+                  <span className="font-mono font-medium">{formatMoney(pSpace.houseRents[3])}</span>
                 </div>
                 <div className="flex justify-between items-center text-red-600 font-bold">
                   <span>Với Khách Sạn 🏨:</span>
-                  <span className="font-mono text-sm font-black">${pSpace.hotelRent}</span>
+                  <span className="font-mono text-sm font-black">{formatMoney(pSpace.hotelRent)}</span>
                 </div>
               </div>
 
@@ -136,11 +137,11 @@ export default function PropertyDetailModal({ space, state, onClose }: PropertyD
               <div className="grid grid-cols-2 gap-2 text-xs bg-slate-50 p-2 rounded-xl border border-slate-200">
                 <div>
                   <span className="text-slate-500 block text-[10px]">Chi phí xây nhà:</span>
-                  <span className="font-bold text-slate-800 font-mono">${pSpace.houseCost} / nhà</span>
+                  <span className="font-bold text-slate-800 font-mono">{formatMoney(pSpace.houseCost)} / nhà</span>
                 </div>
                 <div>
                   <span className="text-slate-500 block text-[10px]">Giá thế chấp:</span>
-                  <span className="font-bold text-slate-800 font-mono">${pSpace.price / 2}</span>
+                  <span className="font-bold text-slate-800 font-mono">{formatMoney(pSpace.price / 2)}</span>
                 </div>
               </div>
             </>
@@ -153,10 +154,10 @@ export default function PropertyDetailModal({ space, state, onClose }: PropertyD
                 Tiền thuê nhân đôi theo số bến xe sở hữu:
               </div>
               <div className="space-y-1 text-xs">
-                <div className="flex justify-between"><span>1 Bến xe:</span><span className="font-bold font-mono">$25</span></div>
-                <div className="flex justify-between"><span>2 Bến xe:</span><span className="font-bold font-mono">$50</span></div>
-                <div className="flex justify-between"><span>3 Bến xe:</span><span className="font-bold font-mono">$100</span></div>
-                <div className="flex justify-between"><span>4 Bến xe:</span><span className="font-bold font-mono">$200</span></div>
+                <div className="flex justify-between"><span>1 Bến xe:</span><span className="font-bold font-mono">250.000 ₫</span></div>
+                <div className="flex justify-between"><span>2 Bến xe:</span><span className="font-bold font-mono">500.000 ₫</span></div>
+                <div className="flex justify-between"><span>3 Bến xe:</span><span className="font-bold font-mono">1.000.000 ₫</span></div>
+                <div className="flex justify-between"><span>4 Bến xe:</span><span className="font-bold font-mono">2.000.000 ₫</span></div>
               </div>
             </div>
           )}
@@ -165,8 +166,8 @@ export default function PropertyDetailModal({ space, state, onClose }: PropertyD
             <div className="space-y-2 py-1 border-b border-slate-200 pb-3 text-center text-xs">
               <div className="text-3xl">{space.position === 12 ? '💡' : '🚰'}</div>
               <div className="text-[11px] text-slate-600">
-                1 cơ sở: Tiền thuê gấp <strong>4 lần</strong> điểm xúc xắc.<br/>
-                2 cơ sở: Tiền thuê gấp <strong>10 lần</strong> điểm xúc xắc.
+                1 cơ sở: Tiền thuê gấp <strong>40.000 ₫</strong> x điểm xúc xắc.<br/>
+                2 cơ sở: Tiền thuê gấp <strong>100.000 ₫</strong> x điểm xúc xắc.
               </div>
             </div>
           )}
@@ -183,7 +184,7 @@ export default function PropertyDetailModal({ space, state, onClose }: PropertyD
                   <span className="font-bold text-slate-900 text-xs">{owner.nickname}</span>
                 </div>
                 <span className="text-[10px] font-bold text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-md">
-                  Đã sở hữu
+                  {ownership?.houseCount === 5 ? '🏨 Khách sạn' : ownership?.houseCount ? `🏠 ${ownership.houseCount} Nhà` : 'Đã sở hữu'}
                 </span>
               </div>
             ) : (

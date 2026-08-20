@@ -3,6 +3,7 @@
 import React from 'react';
 import { BoardSpace, PropertySpace } from '@/game/types';
 import { getLocationArtwork } from '@/game/locationArtworks';
+import { formatMoney } from '@/utils/format';
 import { motion, AnimatePresence } from 'framer-motion';
 import { MapPin, Sparkles } from 'lucide-react';
 
@@ -57,7 +58,7 @@ export default function LocationLandingReveal({ space, isVisible }: LocationLand
             {pSpace && (
               <div className="text-right shrink-0 bg-amber-500/20 px-3 py-1.5 rounded-xl border border-amber-400/40">
                 <span className="text-[9px] uppercase font-bold text-slate-400 block">Giá đất</span>
-                <span className="text-base font-black font-mono text-amber-400">${pSpace.price}</span>
+                <span className="text-sm md:text-base font-black font-mono text-amber-400">{formatMoney(pSpace.price)}</span>
               </div>
             )}
           </div>

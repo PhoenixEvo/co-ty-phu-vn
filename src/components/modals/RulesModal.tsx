@@ -16,7 +16,7 @@ export default function RulesModal({ onClose }: RulesModalProps) {
           <h3 className="font-black text-xl text-slate-900">Luật Chơi Cờ Tỷ Phú Việt Nam</h3>
           <button 
             onClick={onClose}
-            className="p-1.5 rounded-full hover:bg-slate-200 text-slate-500 transition"
+            className="p-1.5 rounded-full hover:bg-slate-200 text-slate-500 transition cursor-pointer"
           >
             <X size={18} />
           </button>
@@ -30,7 +30,7 @@ export default function RulesModal({ onClose }: RulesModalProps) {
               Mục tiêu trò chơi
             </h4>
             <p className="text-xs pl-7">
-              Trở thành người chơi giàu nhất bằng cách mua đất, xây dựng bất động sản và thu tiền thuê từ đối thủ cho đến khi những người chơi khác phá sản.
+              Trở thành người chơi giàu nhất bằng cách mua đất, xây dựng bất động sản và thu tiền thuê từ đối thủ cho đến khi những người chơi khác phá sản. Tiền khởi đầu: <strong>10.000.000 ₫</strong>.
             </p>
           </div>
 
@@ -40,17 +40,18 @@ export default function RulesModal({ onClose }: RulesModalProps) {
               Lượt chơi & Xúc xắc
             </h4>
             <p className="text-xs pl-7">
-              Người chơi lần lượt đổ 2 xúc xắc và di chuyển quân cờ theo chiều kim đồng hồ. Nếu đổ được **xúc xắc đôi**, bạn được đổ thêm một lượt nữa! Nhưng nếu đổ đôi 3 lần liên tiếp, bạn sẽ bị **vào tù ngay lập tức**.
+              Người chơi lần lượt đổ 2 xúc xắc và di chuyển quân cờ theo chiều kim đồng hồ. Nếu đổ được <strong>xúc xắc đôi</strong>, bạn được đổ thêm một lượt nữa! Nhưng nếu đổ đôi 3 lần liên tiếp, bạn sẽ bị <strong>vào tù ngay lập tức</strong>.
             </p>
           </div>
 
           <div className="space-y-1.5">
             <h4 className="font-black text-slate-900 flex items-center gap-2">
               <span className="w-5 h-5 rounded-full bg-red-600 text-white flex items-center justify-center text-xs">3</span>
-              Mua Đất & Thu Tiền Thuê
+              Mua Đất & Xây Nhà / Khách Sạn
             </h4>
             <p className="text-xs pl-7">
-              Khi dừng chân tại một ô đất chưa có chủ, bạn có quyền **Mua** hoặc **Bỏ qua**. Nếu dừng chân tại ô đất của người khác, bạn phải **trả tiền thuê** theo bảng giá quy định.
+              - Dừng chân tại ô đất chưa có chủ: Có quyền <strong>Mua</strong> hoặc <strong>Bỏ qua</strong>.<br/>
+              - Dừng chân tại ô đất của chính mình: Có thể trả tiền để <strong>Xây thêm Nhà 🏠 (tối đa 4 nhà)</strong> hoặc <strong>Lên Khách Sạn 🏨</strong> nhằm tăng tiền thuê khi đối thủ giẫm vào.
             </p>
           </div>
 
@@ -60,7 +61,7 @@ export default function RulesModal({ onClose }: RulesModalProps) {
               Ô Bắt Đầu & Thuế
             </h4>
             <p className="text-xs pl-7">
-              Mỗi khi hoàn thành 1 vòng và đi qua hoặc dừng tại ô **Bắt Đầu**, bạn sẽ được nhận **$200 tiền lương**. Khi dừng ở ô **Thuế**, bạn phải nộp tiền phạt cho ngân hàng.
+              Mỗi khi hoàn thành 1 vòng và đi qua hoặc dừng tại ô <strong>Bắt Đầu</strong>, bạn sẽ được nhận <strong>2.000.000 ₫ tiền lương</strong>. Khi dừng ở ô <strong>Thuế</strong>, bạn phải nộp tiền phạt cho cơ quan thuế.
             </p>
           </div>
 
@@ -70,7 +71,7 @@ export default function RulesModal({ onClose }: RulesModalProps) {
               Ở Tù & Ra Tù
             </h4>
             <p className="text-xs pl-7">
-              Khi ở tù, bạn có thể ra tù bằng cách: đổ được **xúc xắc đôi** trong lượt của mình, hoặc sau 3 lượt ở tù tự động trả bảo lãnh $50 để được tự do.
+              Khi ở tù, bạn có thể ra tù bằng cách: đổ được <strong>xúc xắc đôi</strong> trong lượt của mình, hoặc sau 3 lượt ở tù tự động nộp phạt <strong>500.000 ₫</strong> để được tự do.
             </p>
           </div>
         </div>
@@ -79,7 +80,7 @@ export default function RulesModal({ onClose }: RulesModalProps) {
         <div className="p-3 bg-slate-50 border-t border-slate-200 text-center">
           <button 
             onClick={onClose}
-            className="w-full py-2.5 bg-slate-800 hover:bg-slate-900 text-white font-bold rounded-xl transition"
+            className="w-full py-2.5 bg-slate-800 hover:bg-slate-900 text-white font-bold rounded-xl transition cursor-pointer"
           >
             Đã Hiểu
           </button>

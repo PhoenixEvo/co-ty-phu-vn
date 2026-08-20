@@ -2,6 +2,7 @@
 
 import { Card } from '@/game/cards';
 import { motion, AnimatePresence } from 'framer-motion';
+import { formatMoney } from '@/utils/format';
 import { Sparkles, ArrowRight } from 'lucide-react';
 
 interface CardDrawModalProps {
@@ -62,7 +63,7 @@ export default function CardDrawModal({ card, onDismiss, isMyTurn }: CardDrawMod
                 ? 'bg-emerald-500 text-white' 
                 : 'bg-red-900 text-red-100'
             }`}>
-              {card.effect.amount > 0 ? `+ $${card.effect.amount}` : `- $${Math.abs(card.effect.amount)}`}
+              {card.effect.amount > 0 ? `+ ${formatMoney(card.effect.amount)}` : `- ${formatMoney(Math.abs(card.effect.amount))}`}
             </div>
           )}
 
@@ -70,7 +71,7 @@ export default function CardDrawModal({ card, onDismiss, isMyTurn }: CardDrawMod
           {isMyTurn ? (
             <button
               onClick={onDismiss}
-              className={`w-full py-3.5 px-6 rounded-2xl font-black text-lg transition-all shadow-lg transform active:scale-95 flex items-center justify-center gap-2 ${
+              className={`w-full py-3.5 px-6 rounded-2xl font-black text-lg transition-all shadow-lg transform active:scale-95 flex items-center justify-center gap-2 cursor-pointer ${
                 isChance 
                   ? 'bg-amber-300 hover:bg-amber-400 text-red-900' 
                   : 'bg-slate-900 hover:bg-black text-white'

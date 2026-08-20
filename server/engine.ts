@@ -1,6 +1,7 @@
 import { GameState, ClientAction, Player, TurnState, BoardSpace, PropertySpace, TransportSpace, UtilitySpace, GameEvent } from '../src/game/types';
 import { BOARD_SPACES } from '../src/game/boardConfig';
 import { CHANCE_CARDS, FORTUNE_CARDS, Card } from '../src/game/cards';
+import { formatMoney } from '../src/utils/format';
 
 export function createInitialState(roomId: string): GameState {
   return {
@@ -13,8 +14,8 @@ export function createInitialState(roomId: string): GameState {
     properties: {},
     events: [],
     config: {
-      startingMoney: 1500,
-      goSalary: 200,
+      startingMoney: 10_000_000, // 10 Triệu VNĐ
+      goSalary: 2_000_000,       // 2 Triệu VNĐ
     },
     awaitingAction: null,
     lastDrawnCard: null,
@@ -45,6 +46,58 @@ function setCenterBanner(state: GameState, text: string, type: NonNullable<GameS
     text,
     type
   };
+}
+
+// Check if owner owns all properties in a color group
+function hasFullColorSet(state: GameState, ownerId: string, colorGroup: PropertySpace['colorGroup']): boolean {
+  const groupProperties = BOARD_SPACES.filter(
+    s => s.type === 'property' && (s as PropertySpace).colorGroup === colorGroup
+  );
+  return groupProperties.every(s => state.properties[s.id]?.ownerId === ownerId);
+}
+
+// Calculate dynamic rent based on property upgrades and monopolies
+function calculateRent(state: GameState, space: BoardSpace, diceTotal: number): number {
+  const ownership = state.properties[space.id];
+  if (!ownership) return 0;
+
+  if (space.type === 'property') {
+    const pSpace = space as PropertySpace;
+    const { houseCount } = ownership;
+
+    if (houseCount === 0) {
+      const isMonopoly = hasFullColorSet(state, ownership.ownerId, pSpace.colorGroup);
+      return isMonopoly ? pSpace.baseRent * 2 : pSpace.baseRent;
+    }
+    if (houseCount >= 1 && houseCount <= 4) {
+      return pSpace.houseRents[houseCount - 1];
+    }
+    if (houseCount === 5) {
+      return pSpace.hotelRent;
+    }
+    return pSpace.baseRent;
+  }
+
+  if (space.type === 'transport') {
+    const allTransports = BOARD_SPACES.filter(s => s.type === 'transport');
+    const ownedCount = allTransports.filter(s => state.properties[s.id]?.ownerId === ownership.ownerId).length;
+    switch (ownedCount) {
+      case 1: return 250_000;
+      case 2: return 500_000;
+      case 3: return 1_000_000;
+      case 4: return 2_000_000;
+      default: return 250_000;
+    }
+  }
+
+  if (space.type === 'utility') {
+    const allUtilities = BOARD_SPACES.filter(s => s.type === 'utility');
+    const ownedCount = allUtilities.filter(s => state.properties[s.id]?.ownerId === ownership.ownerId).length;
+    const multiplier = ownedCount >= 2 ? 100_000 : 40_000;
+    return diceTotal * multiplier;
+  }
+
+  return 0;
 }
 
 function nextPlayer(state: GameState) {
@@ -140,10 +193,10 @@ export function gameReducer(state: GameState, action: ClientAction, playerId: st
         } else {
           player.jailTurns += 1;
           if (player.jailTurns >= 3) {
-            player.money -= 50;
+            player.money -= 500_000;
             player.inJail = false;
             player.jailTurns = 0;
-            logEvent(draft, `${player.nickname} phải trả $50 để ra tù.`, 'jail', playerId, -50);
+            logEvent(draft, `${player.nickname} phải nộp phạt 500.000 ₫ để ra tù.`, 'jail', playerId, -500_000);
           } else {
             logEvent(draft, `${player.nickname} không đổ được đôi và vẫn ở tù.`, 'jail', playerId);
             nextPlayer(draft);
@@ -173,8 +226,8 @@ export function gameReducer(state: GameState, action: ClientAction, playerId: st
       const nextPos = player.position + d1 + d2;
       if (nextPos >= 40) {
         player.money += draft.config.goSalary;
-        logEvent(draft, `${player.nickname} đi qua Bắt Đầu và nhận $${draft.config.goSalary}.`, 'pass_go', playerId, draft.config.goSalary);
-        setCenterBanner(draft, `💰 ${player.nickname} NHẬN LƯƠNG $${draft.config.goSalary}`, 'pass_go');
+        logEvent(draft, `${player.nickname} đi qua Bắt Đầu và nhận ${formatMoney(draft.config.goSalary)}.`, 'pass_go', playerId, draft.config.goSalary);
+        setCenterBanner(draft, `💰 ${player.nickname} NHẬN LƯƠNG ${formatMoney(draft.config.goSalary)}`, 'pass_go');
       }
       player.position = nextPos % 40;
 
@@ -186,24 +239,16 @@ export function gameReducer(state: GameState, action: ClientAction, playerId: st
       if (space.type === 'property' || space.type === 'transport' || space.type === 'utility') {
         const ownership = draft.properties[space.id];
         if (ownership) {
+          // If owned by another player
           if (ownership.ownerId !== player.id) {
             const owner = draft.players.find(p => p.id === ownership.ownerId);
             if (owner && !owner.inJail) {
-              let rent = 0;
-              if (space.type === 'property') {
-                const pSpace = space as PropertySpace;
-                rent = pSpace.baseRent;
-              } else if (space.type === 'transport') {
-                const tSpace = space as TransportSpace;
-                rent = tSpace.baseRent;
-              } else if (space.type === 'utility') {
-                rent = (d1 + d2) * 4;
-              }
+              const rent = calculateRent(draft, space, d1 + d2);
               
               player.money -= rent;
               owner.money += rent;
-              logEvent(draft, `${player.nickname} trả $${rent} tiền thuê cho ${owner.nickname}.`, 'rent', playerId, -rent);
-              setCenterBanner(draft, `💸 ${player.nickname} TRẢ $${rent} TIỀN THUÊ`, 'rent');
+              logEvent(draft, `${player.nickname} trả ${formatMoney(rent)} tiền thuê cho ${owner.nickname}.`, 'rent', playerId, -rent);
+              setCenterBanner(draft, `💸 ${player.nickname} TRẢ ${formatMoney(rent)} TIỀN THUÊ`, 'rent');
               
               if (player.money < 0) {
                 player.isBankrupt = true;
@@ -213,9 +258,16 @@ export function gameReducer(state: GameState, action: ClientAction, playerId: st
             }
             nextPlayer(draft);
           } else {
-            nextPlayer(draft);
+            // Player landed on OWN property! Allow house upgrade if it's a property and < 5 houses
+            if (space.type === 'property' && ownership.houseCount < 5) {
+              draft.turnState = 'AWAITING_ACTION';
+              draft.awaitingAction = { type: 'upgrade_property', spaceIndex: player.position };
+            } else {
+              nextPlayer(draft);
+            }
           }
         } else {
+          // Unowned space: allow buy
           draft.turnState = 'AWAITING_ACTION';
           draft.awaitingAction = { type: 'buy_property', spaceIndex: player.position };
         }
@@ -277,7 +329,7 @@ export function gameReducer(state: GameState, action: ClientAction, playerId: st
       if (player.money >= price) {
         player.money -= price;
         draft.properties[space.id] = { ownerId: player.id, houseCount: 0, isMortgaged: false };
-        logEvent(draft, `${player.nickname} đã mua ${space.name} ($${price}).`, 'buy', playerId, -price);
+        logEvent(draft, `${player.nickname} đã mua ${space.name} (${formatMoney(price)}).`, 'buy', playerId, -price);
         setCenterBanner(draft, `🏠 ${player.nickname} ĐÃ MUA ${space.name.toUpperCase()}`, 'buy');
       } else {
         logEvent(draft, `${player.nickname} không đủ tiền mua ${space.name}.`);
@@ -297,21 +349,56 @@ export function gameReducer(state: GameState, action: ClientAction, playerId: st
       return draft;
     }
 
+    case 'UPGRADE_PROPERTY': {
+      if (draft.status !== 'playing' || !isCurrentTurn || draft.turnState !== 'AWAITING_ACTION') return draft;
+      if (!draft.awaitingAction || draft.awaitingAction.type !== 'upgrade_property') return draft;
+      if (!player) return draft;
+
+      const space = BOARD_SPACES[draft.awaitingAction.spaceIndex!] as PropertySpace;
+      const ownership = draft.properties[space.id];
+
+      if (ownership && ownership.ownerId === player.id && ownership.houseCount < 5) {
+        const cost = space.houseCost;
+        if (player.money >= cost) {
+          player.money -= cost;
+          ownership.houseCount += 1;
+          const upgradeLabel = ownership.houseCount === 5 ? 'KHÁCH SẠN 🏨' : `${ownership.houseCount} NHÀ 🏠`;
+          logEvent(draft, `${player.nickname} đã nâng cấp ${space.name} lên ${upgradeLabel} (${formatMoney(cost)}).`, 'upgrade', playerId, -cost);
+          setCenterBanner(draft, `🏗️ ${player.nickname} XÂY ${upgradeLabel} TẠI ${space.name.toUpperCase()}`, 'upgrade');
+        } else {
+          logEvent(draft, `${player.nickname} không đủ tiền nâng cấp ${space.name}.`);
+        }
+      }
+
+      draft.awaitingAction = null;
+      nextPlayer(draft);
+      return draft;
+    }
+
+    case 'SKIP_UPGRADE': {
+      if (draft.status !== 'playing' || !isCurrentTurn || draft.turnState !== 'AWAITING_ACTION') return draft;
+      if (!draft.awaitingAction || draft.awaitingAction.type !== 'upgrade_property') return draft;
+      
+      draft.awaitingAction = null;
+      nextPlayer(draft);
+      return draft;
+    }
+
     case 'PAY_TAX': {
       if (draft.status !== 'playing' || !isCurrentTurn || draft.turnState !== 'AWAITING_ACTION') return draft;
       if (!draft.awaitingAction || draft.awaitingAction.type !== 'pay_tax') return draft;
       if (!player) return draft;
 
       const space = BOARD_SPACES[draft.awaitingAction.spaceIndex!] as any;
-      let amount = space.taxAmount || 100;
+      let amount = space.taxAmount || 1_000_000;
       
       if (space.isPercentageOption && action.payload?.percentage) {
         amount = Math.floor(player.money * 0.10);
       }
       
       player.money -= amount;
-      logEvent(draft, `${player.nickname} đã nộp thuế $${amount}.`, 'tax', playerId, -amount);
-      setCenterBanner(draft, `🧾 ${player.nickname} NỘP THUẾ $${amount}`, 'tax');
+      logEvent(draft, `${player.nickname} đã nộp thuế ${formatMoney(amount)}.`, 'tax', playerId, -amount);
+      setCenterBanner(draft, `🧾 ${player.nickname} NỘP THUẾ ${formatMoney(amount)}`, 'tax');
       
       if (player.money < 0) {
         player.isBankrupt = true;
@@ -344,4 +431,3 @@ export function gameReducer(state: GameState, action: ClientAction, playerId: st
       return draft;
   }
 }
-

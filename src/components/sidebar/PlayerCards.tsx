@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { Player, GameState } from '@/game/types';
 import { BOARD_SPACES } from '@/game/boardConfig';
 import PlayerDetailModal from '../modals/PlayerDetailModal';
+import { formatMoney, formatMoneyCompact } from '@/utils/format';
 import { User, Home, Bus, ShieldAlert, Crown, ChevronRight } from 'lucide-react';
 import { motion } from 'framer-motion';
 
@@ -19,7 +20,17 @@ export default function PlayerCards({ state, playerId }: PlayerCardsProps) {
     const owned = BOARD_SPACES.filter(s => state.properties[s.id]?.ownerId === pId);
     const properties = owned.filter(s => s.type === 'property').length;
     const transports = owned.filter(s => s.type === 'transport').length;
-    return { properties, transports };
+    
+    // Count houses & hotels
+    let houses = 0;
+    let hotels = 0;
+    owned.forEach(s => {
+      const hCount = state.properties[s.id]?.houseCount || 0;
+      if (hCount === 5) hotels += 1;
+      else if (hCount >= 1 && hCount <= 4) houses += hCount;
+    });
+
+    return { properties, transports, houses, hotels };
   };
 
   return (
@@ -36,7 +47,7 @@ export default function PlayerCards({ state, playerId }: PlayerCardsProps) {
             const isCurrentTurn = p.id === state.playerOrder[state.currentPlayerIndex];
             const isMe = p.id === playerId;
             const isHost = index === 0;
-            const { properties, transports } = getPlayerAssetsCount(p.id);
+            const { properties, transports, houses, hotels } = getPlayerAssetsCount(p.id);
 
             return (
               <motion.div
@@ -60,19 +71,19 @@ export default function PlayerCards({ state, playerId }: PlayerCardsProps) {
                   {/* Left: Avatar + Name info */}
                   <div className="flex items-center gap-2.5">
                     <div 
-                      className="w-7 h-7 rounded-full flex items-center justify-center text-white font-black text-xs shadow-md border-2 border-white/80"
+                      className="w-7 h-7 rounded-full flex items-center justify-center text-white font-black text-xs shadow-md border-2 border-white/80 shrink-0"
                       style={{ backgroundColor: p.tokenColor }}
                     >
                       {p.nickname.charAt(0).toUpperCase()}
                     </div>
 
-                    <div>
+                    <div className="min-w-0">
                       <div className="flex items-center gap-1.5 leading-tight">
-                        <span className="font-bold text-sm text-white truncate max-w-[110px]">
+                        <span className="font-bold text-sm text-white truncate max-w-[100px]">
                           {p.nickname}
                         </span>
                         {isMe && (
-                          <span className="text-[10px] bg-blue-500/30 text-blue-300 font-bold px-1.5 py-0.2 rounded border border-blue-400/30">
+                          <span className="text-[9px] bg-blue-500/30 text-blue-300 font-bold px-1.5 py-0.2 rounded border border-blue-400/30 shrink-0">
                             BẠN
                           </span>
                         )}
@@ -84,11 +95,21 @@ export default function PlayerCards({ state, playerId }: PlayerCardsProps) {
                       </div>
 
                       {/* Assets count row */}
-                      <div className="flex items-center gap-2 text-[11px] text-slate-400 mt-0.5">
-                        <span className="flex items-center gap-0.5" title="Số lượng đất sở hữu">
-                          🏠 {properties}
+                      <div className="flex items-center gap-2 text-[11px] text-slate-400 mt-0.5 flex-wrap">
+                        <span className="flex items-center gap-0.5" title="Số ô đất sở hữu">
+                          🏞️ {properties}
                         </span>
-                        <span className="flex items-center gap-0.5" title="Số lượng bến xe sở hữu">
+                        {houses > 0 && (
+                          <span className="flex items-center gap-0.5 text-emerald-400 font-bold" title="Số lượng nhà">
+                            🏠 {houses}
+                          </span>
+                        )}
+                        {hotels > 0 && (
+                          <span className="flex items-center gap-0.5 text-amber-400 font-bold" title="Số lượng khách sạn">
+                            🏨 {hotels}
+                          </span>
+                        )}
+                        <span className="flex items-center gap-0.5" title="Số bến xe sở hữu">
                           🚌 {transports}
                         </span>
                       </div>
@@ -96,19 +117,19 @@ export default function PlayerCards({ state, playerId }: PlayerCardsProps) {
                   </div>
 
                   {/* Right: Cash balance + badges */}
-                  <div className="text-right flex flex-col items-end">
-                    <span className="font-mono font-black text-base text-emerald-400">
-                      ${p.money}
+                  <div className="text-right flex flex-col items-end shrink-0 pl-1">
+                    <span className="font-mono font-black text-sm md:text-base text-emerald-400">
+                      {formatMoney(p.money)}
                     </span>
 
                     {p.inJail && (
-                      <span className="text-[9px] font-bold bg-red-950 text-red-300 px-1.5 py-0.2 rounded border border-red-800">
+                      <span className="text-[9px] font-bold bg-red-950 text-red-300 px-1.5 py-0.2 rounded border border-red-800 mt-0.5">
                         Ở tù ⛓️
                       </span>
                     )}
 
                     {p.isBankrupt && (
-                      <span className="text-[9px] font-bold bg-slate-700 text-slate-300 px-1.5 py-0.2 rounded">
+                      <span className="text-[9px] font-bold bg-slate-700 text-slate-300 px-1.5 py-0.2 rounded mt-0.5">
                         Phá sản 💀
                       </span>
                     )}

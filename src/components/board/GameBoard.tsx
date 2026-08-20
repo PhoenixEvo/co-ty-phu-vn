@@ -117,6 +117,7 @@ export default function GameBoard({
                     space={space as PropertySpace} 
                     edge={edge as BoardEdge} 
                     owner={owner} 
+                    ownership={ownership}
                   />
                 ) : space.type === 'transport' ? (
                   <TransportTile 
