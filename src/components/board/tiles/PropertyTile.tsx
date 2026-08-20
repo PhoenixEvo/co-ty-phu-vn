@@ -44,7 +44,7 @@ function BuildingIndicator({ houseCount, owner, isMortgaged }: { houseCount: num
     // Hotel: Luxury Red-Gold Badge with Hotel Icon
     return (
       <div className="flex items-center justify-center z-10 animate-in zoom-in-50 duration-200">
-        <div className="bg-linear-to-r from-red-600 to-rose-700 text-amber-300 font-black text-[8px] md:text-[9.5px] px-1.5 py-0.5 rounded-md shadow-md border-1.5 border-amber-300 flex items-center gap-0.5 leading-none">
+        <div className="bg-linear-to-r from-red-600 to-rose-700 text-amber-300 font-black text-[8px] md:text-[9.5px] px-1 py-0.5 rounded-md shadow-md border border-amber-300 flex items-center gap-0.5 leading-none">
           <span className="text-[10px] md:text-xs leading-none">🏨</span>
           <span className="font-mono text-[7px] md:text-[8px] font-black text-amber-200">KS</span>
         </div>
@@ -53,18 +53,17 @@ function BuildingIndicator({ houseCount, owner, isMortgaged }: { houseCount: num
   }
 
   if (houseCount >= 1 && houseCount <= 4) {
-    // 1-4 Green Houses inside dark backing so green houses pop with 100% clarity
+    // High-clarity Green House Badge: Never gets clipped on narrow vertical strips!
     return (
-      <div className="flex items-center justify-center gap-0.5 z-10 animate-in zoom-in-50 duration-200 bg-slate-950/85 px-1 py-0.5 rounded-md border border-emerald-400 shadow-md">
-        {Array.from({ length: houseCount }).map((_, i) => (
-          <span 
-            key={i} 
-            className="text-[9px] md:text-[10.5px] leading-none drop-shadow"
-            title={`${houseCount} Nhà`}
-          >
-            🏠
-          </span>
-        ))}
+      <div className="flex items-center justify-center z-10 animate-in zoom-in-50 duration-200">
+        <div className="bg-slate-950/90 text-emerald-300 font-black text-[8px] md:text-[9.5px] px-1 py-0.5 rounded-md shadow-md border border-emerald-400/90 flex items-center gap-0.5 leading-none">
+          <span className="text-[9px] md:text-[10.5px] leading-none">🏠</span>
+          {houseCount > 1 && (
+            <span className="font-mono text-[7.5px] md:text-[8.5px] font-black text-emerald-200">
+              x{houseCount}
+            </span>
+          )}
+        </div>
       </div>
     );
   }
