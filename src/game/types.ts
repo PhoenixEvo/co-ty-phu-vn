@@ -100,6 +100,7 @@ export type TurnState =
 
 export interface GameState {
   roomId: string;
+  revision?: number;
   status: 'waiting' | 'playing' | 'finished';
   players: Player[];
   playerOrder: string[];
