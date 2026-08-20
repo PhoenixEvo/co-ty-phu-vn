@@ -479,7 +479,7 @@ export function gameReducer(state: GameState, action: ClientAction, playerId: st
         return draft;
       }
 
-      // Execute card effect upon user dismissal
+      // 1. Money change effect
       if (card.effect.type === 'money' && card.effect.amount) {
         player.money += card.effect.amount;
         if (player.money < 0) {
@@ -490,6 +490,7 @@ export function gameReducer(state: GameState, action: ClientAction, playerId: st
         return draft;
       }
 
+      // 2. Collect from all players effect
       if (card.effect.type === 'collect_from_all' && card.effect.amount) {
         const amt = card.effect.amount;
         draft.players.forEach(otherP => {
@@ -505,6 +506,50 @@ export function gameReducer(state: GameState, action: ClientAction, playerId: st
         return draft;
       }
 
+      // 3. Pay to all players effect (e.g. treat everyone to hotpot)
+      if (card.effect.type === 'pay_to_all' && card.effect.amount) {
+        const amt = card.effect.amount;
+        draft.players.forEach(otherP => {
+          if (otherP.id !== player.id && !otherP.isBankrupt) {
+            player.money -= amt;
+            otherP.money += amt;
+          }
+        });
+        if (player.money < 0) {
+          player.isBankrupt = true;
+          logEvent(draft, `${player.nickname} đã phá sản do không đủ tiền khao bạn bè!`, 'bankrupt', playerId);
+        }
+        nextPlayer(draft);
+        return draft;
+      }
+
+      // 4. Property repairs maintenance fee effect
+      if (card.effect.type === 'repairs') {
+        const houseFee = card.effect.houseFee || 150_000;
+        const hotelFee = card.effect.hotelFee || 600_000;
+        let houses = 0;
+        let hotels = 0;
+
+        Object.entries(draft.properties).forEach(([spaceId, ownership]) => {
+          if (ownership.ownerId === player.id) {
+            if (ownership.houseCount === 5) hotels += 1;
+            else if (ownership.houseCount >= 1 && ownership.houseCount <= 4) houses += ownership.houseCount;
+          }
+        });
+
+        const totalRepairCost = houses * houseFee + hotels * hotelFee;
+        player.money -= totalRepairCost;
+        logEvent(draft, `${player.nickname} nộp ${formatMoney(totalRepairCost)} chi phí bảo trì (${houses} nhà, ${hotels} khách sạn).`, 'tax', playerId, -totalRepairCost);
+        
+        if (player.money < 0) {
+          player.isBankrupt = true;
+          logEvent(draft, `${player.nickname} đã phá sản do không đủ tiền bảo trì bất động sản!`, 'bankrupt', playerId);
+        }
+        nextPlayer(draft);
+        return draft;
+      }
+
+      // 5. Send to jail effect
       if (card.effect.type === 'jail') {
         player.position = 10;
         player.inJail = true;
@@ -514,6 +559,57 @@ export function gameReducer(state: GameState, action: ClientAction, playerId: st
         return draft;
       }
 
+      // 6. Move relative steps (e.g. backward 3 steps)
+      if (card.effect.type === 'move_steps' && card.effect.steps !== undefined) {
+        const targetPos = (player.position + card.effect.steps + 40) % 40;
+        player.position = targetPos;
+        const destSpace = BOARD_SPACES[targetPos];
+        logEvent(draft, `${player.nickname} di chuyển ${card.effect.steps > 0 ? 'tiến' : 'lùi'} ${Math.abs(card.effect.steps)} ô đến ${destSpace.name}.`);
+
+        // Resolve destination space
+        if (destSpace.type === 'property' || destSpace.type === 'transport' || destSpace.type === 'utility') {
+          const ownership = draft.properties[destSpace.id];
+          if (ownership) {
+            if (ownership.ownerId !== player.id) {
+              const owner = draft.players.find(p => p.id === ownership.ownerId);
+              if (owner && !owner.inJail && !ownership.isMortgaged) {
+                const rent = calculateRent(draft, destSpace, 7);
+                player.money -= rent;
+                owner.money += rent;
+                logEvent(draft, `${player.nickname} trả ${formatMoney(rent)} tiền thuê cho ${owner.nickname}.`, 'rent', playerId, -rent);
+                setCenterBanner(draft, `💸 ${player.nickname} TRẢ ${formatMoney(rent)} TIỀN THUÊ`, 'rent');
+                if (player.money < 0) {
+                  player.isBankrupt = true;
+                }
+              }
+              nextPlayer(draft);
+              return draft;
+            } else {
+              if (destSpace.type === 'property' && !ownership.isMortgaged && ownership.houseCount < 5) {
+                draft.turnState = 'AWAITING_ACTION';
+                draft.awaitingAction = { type: 'upgrade_property', spaceIndex: targetPos };
+                return draft;
+              } else {
+                nextPlayer(draft);
+                return draft;
+              }
+            }
+          } else {
+            draft.turnState = 'AWAITING_ACTION';
+            draft.awaitingAction = { type: 'buy_property', spaceIndex: targetPos };
+            return draft;
+          }
+        } else if (destSpace.type === 'tax') {
+          draft.turnState = 'AWAITING_ACTION';
+          draft.awaitingAction = { type: 'pay_tax', spaceIndex: targetPos };
+          return draft;
+        } else {
+          nextPlayer(draft);
+          return draft;
+        }
+      }
+
+      // 7. Move to specific destination space
       if (card.effect.type === 'move_to' && card.effect.targetPosition !== undefined) {
         const targetPos = card.effect.targetPosition;
         

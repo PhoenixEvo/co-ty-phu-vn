@@ -59,11 +59,31 @@ export default function CardDrawModal({ card, onDismiss, isMyTurn }: CardDrawMod
           {/* Effect pill */}
           {card.effect.amount !== undefined && (
             <div className={`px-4 py-1.5 rounded-xl font-mono font-black text-xl mb-4 shadow-inner ${
-              card.effect.amount > 0 
-                ? 'bg-emerald-500 text-white' 
-                : 'bg-red-900 text-red-100'
+              card.effect.type === 'pay_to_all' 
+                ? 'bg-red-900 text-red-100'
+                : card.effect.amount > 0 
+                  ? 'bg-emerald-500 text-white' 
+                  : 'bg-red-900 text-red-100'
             }`}>
-              {card.effect.amount > 0 ? `+ ${formatMoney(card.effect.amount)}` : `- ${formatMoney(Math.abs(card.effect.amount))}`}
+              {card.effect.type === 'pay_to_all' 
+                ? `- ${formatMoney(card.effect.amount)} / người`
+                : card.effect.type === 'collect_from_all'
+                  ? `+ ${formatMoney(card.effect.amount)} / người`
+                  : card.effect.amount > 0 
+                    ? `+ ${formatMoney(card.effect.amount)}` 
+                    : `- ${formatMoney(Math.abs(card.effect.amount))}`}
+            </div>
+          )}
+
+          {card.effect.type === 'repairs' && (
+            <div className="px-3 py-1.5 rounded-xl font-mono font-bold text-xs mb-4 shadow-inner bg-red-900/90 text-red-100 border border-red-400/40">
+              Chi phí: {formatMoney(card.effect.houseFee || 200_000)}/Nhà • {formatMoney(card.effect.hotelFee || 800_000)}/Khách Sạn
+            </div>
+          )}
+
+          {card.effect.type === 'move_steps' && (
+            <div className="px-4 py-1.5 rounded-xl font-mono font-black text-lg mb-4 shadow-inner bg-amber-900/90 text-amber-200 border border-amber-400/40">
+              {card.effect.steps && card.effect.steps < 0 ? `Lùi Lại ${Math.abs(card.effect.steps)} Ô ⏪` : `Tiến Thêm ${card.effect.steps} Ô ⏩`}
             </div>
           )}
 
