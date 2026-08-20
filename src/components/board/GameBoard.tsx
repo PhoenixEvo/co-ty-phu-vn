@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { GameState, BoardSpace, PropertySpace, TransportSpace, UtilitySpace, TaxSpace } from '@/game/types';
 import { BOARD_SPACES } from '@/game/boardConfig';
+import VietnamCenterArtwork from './center/VietnamCenterArtwork';
 import PropertyTile, { BoardEdge } from './tiles/PropertyTile';
 import TransportTile from './tiles/TransportTile';
 import UtilityTile from './tiles/UtilityTile';
@@ -11,7 +12,6 @@ import EventTile from './tiles/EventTile';
 import CornerTile from './tiles/CornerTile';
 import PlayerToken from './PlayerToken';
 import PropertyDetailModal from '../modals/PropertyDetailModal';
-import { motion, AnimatePresence } from 'framer-motion';
 
 interface GameBoardProps {
   state: GameState;
@@ -68,50 +68,9 @@ export default function GameBoard({
             gridTemplateRows: '13.5% repeat(9, 1fr) 13.5%',
           }}
         >
-          {/* ================= Center Area ================= */}
-          <div 
-            className="bg-[#edf6ee] flex flex-col items-center justify-center relative overflow-hidden p-4 border border-slate-300 shadow-inner" 
-            style={{ gridArea: '2 / 2 / 11 / 11' }}
-          >
-            {/* Subtle vintage watermark pattern */}
-            <div className="absolute inset-0 opacity-[0.03] bg-[radial-gradient(#000_1px,transparent_1px)] [background-size:16px_16px]" />
-            
-            {/* Center Decorative Emblem */}
-            <div className="text-center rotate-[-45deg] z-10 select-none">
-              <div className="flex items-center justify-center gap-2 mb-1">
-                <span className="h-0.5 w-12 bg-red-600/40 rounded" />
-                <span className="text-xs font-black tracking-widest text-red-700/80 uppercase">TRÒ CHƠI DÂN GIAN</span>
-                <span className="h-0.5 w-12 bg-red-600/40 rounded" />
-              </div>
-
-              <h1 
-                className="text-5xl md:text-7xl lg:text-8xl font-black text-red-600 tracking-tight whitespace-nowrap drop-shadow-md"
-                style={{
-                  textShadow: '0 4px 12px rgba(220, 38, 38, 0.25), 0 2px 0 #991b1b'
-                }}
-              >
-                CỜ TỶ PHÚ
-              </h1>
-              
-              <div className="inline-block bg-amber-400 text-slate-900 font-extrabold text-xs md:text-sm px-3 py-1 rounded-full uppercase tracking-wider shadow-sm mt-1 border border-amber-500">
-                Phiên Bản Việt Nam 🇻🇳
-              </div>
-            </div>
-
-            {/* Central Live Notification Banner */}
-            <AnimatePresence>
-              {state.lastCenterBanner && (
-                <motion.div 
-                  key={state.lastCenterBanner.id}
-                  initial={{ opacity: 0, y: 20, scale: 0.9 }}
-                  animate={{ opacity: 1, y: 0, scale: 1 }}
-                  exit={{ opacity: 0, scale: 0.9 }}
-                  className="absolute bottom-6 md:bottom-10 z-20 max-w-[85%] bg-slate-900/90 backdrop-blur-md text-white text-xs md:text-sm font-bold px-4 py-2 rounded-xl shadow-xl border border-slate-700/80 flex items-center gap-2 text-center"
-                >
-                  <span>{state.lastCenterBanner.text}</span>
-                </motion.div>
-              )}
-            </AnimatePresence>
+          {/* ================= Center Area: Layered Vietnamese Landscape Artwork ================= */}
+          <div className="relative overflow-hidden" style={{ gridArea: '2 / 2 / 11 / 11' }}>
+            <VietnamCenterArtwork lastCenterBanner={state.lastCenterBanner} />
           </div>
 
           {/* ================= 40 Board Spaces ================= */}

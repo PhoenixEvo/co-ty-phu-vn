@@ -27,12 +27,20 @@ export interface PropertySpace extends BaseSpace {
   houseRents: number[];
   hotelRent: number;
   houseCost: number;
+  landmark?: string;
+  region?: 'north' | 'central' | 'south';
+  landmarkIcon?: string;
+  description?: string;
 }
 
 export interface TransportSpace extends BaseSpace {
   type: 'transport';
   price: number;
   baseRent: number;
+  landmark?: string;
+  region?: 'north' | 'central' | 'south';
+  landmarkIcon?: string;
+  description?: string;
 }
 
 export interface UtilitySpace extends BaseSpace {

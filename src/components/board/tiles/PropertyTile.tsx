@@ -49,9 +49,12 @@ export default function PropertyTile({ space, edge, owner }: PropertyTileProps) 
 
         {/* White Content Region */}
         <div className="flex-1 flex flex-col justify-between items-center p-1 text-center min-w-0">
-          <span className={`w-full text-slate-900 uppercase break-words hyphens-auto mt-0.5 ${getNameFontSize(space.name)}`}>
-            {space.name}
-          </span>
+          <div className="flex items-center justify-center gap-1 w-full mt-0.5">
+            {space.landmarkIcon && <span className="text-[9px] leading-none opacity-85 shrink-0">{space.landmarkIcon}</span>}
+            <span className={`text-slate-900 uppercase break-words hyphens-auto ${getNameFontSize(space.name)}`}>
+              {space.name}
+            </span>
+          </div>
 
           {/* Price Badge */}
           <div className="font-mono font-black text-[8.5px] md:text-[9.5px] text-slate-800 bg-slate-100 px-1.5 py-0.2 rounded border border-slate-200 shadow-2xs mt-auto">
@@ -73,9 +76,12 @@ export default function PropertyTile({ space, edge, owner }: PropertyTileProps) 
             ${space.price}
           </div>
 
-          <span className={`w-full text-slate-900 uppercase break-words hyphens-auto mb-0.5 ${getNameFontSize(space.name)}`}>
-            {space.name}
-          </span>
+          <div className="flex items-center justify-center gap-1 w-full mb-0.5">
+            {space.landmarkIcon && <span className="text-[9px] leading-none opacity-85 shrink-0">{space.landmarkIcon}</span>}
+            <span className={`text-slate-900 uppercase break-words hyphens-auto ${getNameFontSize(space.name)}`}>
+              {space.name}
+            </span>
+          </div>
         </div>
 
         {/* Color Strip (Bottom / Inner Edge) */}
@@ -98,9 +104,12 @@ export default function PropertyTile({ space, edge, owner }: PropertyTileProps) 
       <div className="w-full h-full flex flex-row justify-between bg-white relative select-none">
         {/* White Content Region (Left / Outer side) */}
         <div className="flex-1 h-full flex flex-col justify-between items-center p-1 text-center min-w-0">
-          <span className={`w-full text-slate-900 uppercase break-words hyphens-auto mt-0.5 ${getNameFontSize(space.name)}`}>
-            {space.name}
-          </span>
+          <div className="flex items-center justify-center gap-1 w-full mt-0.5">
+            {space.landmarkIcon && <span className="text-[8px] leading-none opacity-85 shrink-0">{space.landmarkIcon}</span>}
+            <span className={`text-slate-900 uppercase break-words hyphens-auto ${getNameFontSize(space.name)}`}>
+              {space.name}
+            </span>
+          </div>
 
           {/* Price Badge */}
           <div className="font-mono font-black text-[8px] md:text-[9px] text-slate-800 bg-slate-100 px-1.5 py-0.2 rounded border border-slate-200 shadow-2xs mt-auto">
@@ -138,9 +147,12 @@ export default function PropertyTile({ space, edge, owner }: PropertyTileProps) 
 
       {/* White Content Region (Right / Outer side) */}
       <div className="flex-1 h-full flex flex-col justify-between items-center p-1 text-center min-w-0">
-        <span className={`w-full text-slate-900 uppercase break-words hyphens-auto mt-0.5 ${getNameFontSize(space.name)}`}>
-          {space.name}
-        </span>
+        <div className="flex items-center justify-center gap-1 w-full mt-0.5">
+          {space.landmarkIcon && <span className="text-[8px] leading-none opacity-85 shrink-0">{space.landmarkIcon}</span>}
+          <span className={`text-slate-900 uppercase break-words hyphens-auto ${getNameFontSize(space.name)}`}>
+            {space.name}
+          </span>
+        </div>
 
         {/* Price Badge */}
         <div className="font-mono font-black text-[8px] md:text-[9px] text-slate-800 bg-slate-100 px-1.5 py-0.2 rounded border border-slate-200 shadow-2xs mt-auto">
