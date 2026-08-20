@@ -42,6 +42,7 @@ export default function RoomPage() {
   const [isInviteOpen, setIsInviteOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isRulesOpen, setIsRulesOpen] = useState(false);
+  const [isFocusMode, setIsFocusMode] = useState(false);
   const [copiedLobby, setCopiedLobby] = useState(false);
 
   useEffect(() => {
@@ -270,14 +271,16 @@ export default function RoomPage() {
       <GameHeader 
         roomId={roomId} 
         connectedCount={gameState.players.filter(p => p.connected).length}
+        isFocusMode={isFocusMode}
+        onToggleFocusMode={() => setIsFocusMode(!isFocusMode)}
         onOpenInvite={() => setIsInviteOpen(true)}
         onOpenSettings={() => setIsSettingsOpen(true)}
       />
 
-      {/* 2. Main Game Viewport */}
-      <div className="flex-1 flex flex-col md:flex-row gap-3 p-2 md:p-3 overflow-hidden bg-[#071912]">
+      {/* 2. Main Game Viewport (Board-First Priority Layout) */}
+      <div className="flex-1 flex flex-col md:flex-row gap-2 md:gap-3 p-1.5 md:p-2.5 overflow-hidden bg-[#071912] relative">
         
-        {/* Left: Dominant Game Board Container (Vietnamese Game Table Aesthetic) */}
+        {/* Left / Center: Dominant Game Board Container (Vietnamese Game Table Aesthetic) */}
         <VietnameseGameTable>
           <GameBoard 
             state={gameState} 
@@ -289,30 +292,50 @@ export default function RoomPage() {
           />
         </VietnameseGameTable>
         
-        {/* Right: Information-Dense Sidebar */}
-        <aside className="w-full md:w-84 lg:w-96 flex flex-col gap-2.5 shrink-0 overflow-y-auto pr-0.5">
-          {/* Current Turn Panel (Dice + Roll Button) */}
-          <CurrentTurnPanel 
-            state={gameState} 
-            playerId={playerId} 
-            dispatch={dispatch} 
-            isMoving={isMoving}
-          />
+        {/* Right: Information-Dense Supporting Sidebar (Hidden in Focus Mode) */}
+        {!isFocusMode && (
+          <aside className="w-full md:w-72 lg:w-80 flex flex-col gap-2 shrink-0 overflow-y-auto pr-0.5 max-h-full">
+            {/* Current Turn Panel (Dice + Roll Button) */}
+            <CurrentTurnPanel 
+              state={gameState} 
+              playerId={playerId} 
+              dispatch={dispatch} 
+              isMoving={isMoving}
+            />
 
-          {/* Context Action Panel (Buy Property / Pay Tax / Draw Card) */}
-          <ContextActionPanel 
-            state={gameState} 
-            playerId={playerId} 
-            dispatch={dispatch} 
-            isMoving={isMoving}
-          />
+            {/* Context Action Panel (Buy Property / Pay Tax / Draw Card) */}
+            <ContextActionPanel 
+              state={gameState} 
+              playerId={playerId} 
+              dispatch={dispatch} 
+              isMoving={isMoving}
+            />
 
-          {/* Players List */}
-          <PlayerCards state={gameState} playerId={playerId} />
+            {/* Players List */}
+            <PlayerCards state={gameState} playerId={playerId} />
 
-          {/* Activity Feed */}
-          <ActivityFeed events={gameState.events} state={gameState} />
-        </aside>
+            {/* Activity Feed */}
+            <ActivityFeed events={gameState.events} state={gameState} />
+          </aside>
+        )}
+
+        {/* Floating Compact HUD for Focus Mode */}
+        {isFocusMode && (
+          <div className="fixed bottom-4 right-4 z-40 max-w-xs w-full flex flex-col gap-2 pointer-events-auto">
+            <CurrentTurnPanel 
+              state={gameState} 
+              playerId={playerId} 
+              dispatch={dispatch} 
+              isMoving={isMoving}
+            />
+            <ContextActionPanel 
+              state={gameState} 
+              playerId={playerId} 
+              dispatch={dispatch} 
+              isMoving={isMoving}
+            />
+          </div>
+        )}
       </div>
 
       {/* Modals */}

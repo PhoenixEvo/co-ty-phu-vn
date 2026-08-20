@@ -56,9 +56,9 @@ export default function GameBoard({
     <>
       {/* Physical Board Container with Subtle 2.5D Frame */}
       <div 
-        className="w-full max-w-4xl aspect-square relative bg-[#f7f2e7] p-2 md:p-3 rounded-2xl shadow-2xl border-4 border-amber-950/90 select-none flex items-center justify-center"
+        className="aspect-square relative bg-[#f7f2e7] p-1.5 md:p-2.5 lg:p-3 rounded-2xl shadow-2xl border-4 border-amber-950/90 select-none flex items-center justify-center shrink-0 w-[min(100%,calc(100vh-4rem))] max-w-[940px]"
         style={{
-          boxShadow: '0 20px 50px rgba(0,0,0,0.6), inset 0 2px 6px rgba(255,255,255,0.4), inset 0 -4px 8px rgba(0,0,0,0.3)'
+          boxShadow: '0 25px 60px -10px rgba(0,0,0,0.75), inset 0 2px 6px rgba(255,255,255,0.4), inset 0 -4px 8px rgba(0,0,0,0.3)'
         }}
       >
         <div 

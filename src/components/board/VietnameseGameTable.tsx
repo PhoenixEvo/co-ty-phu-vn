@@ -8,7 +8,7 @@ interface VietnameseGameTableProps {
 
 export default function VietnameseGameTable({ children }: VietnameseGameTableProps) {
   return (
-    <main className="flex-1 flex items-center justify-center overflow-auto p-2 md:p-4 relative rounded-2xl bg-linear-to-b from-[#143d30] via-[#0c271e] to-[#05140f] shadow-inner select-none">
+    <main className="flex-1 flex items-center justify-center overflow-hidden p-1.5 md:p-2.5 lg:p-3 relative rounded-2xl bg-linear-to-b from-[#143d30] via-[#0c271e] to-[#05140f] shadow-inner select-none h-full min-h-0">
       
       {/* 1. Soft Radial Spotlight directly behind the central board */}
       <div 
@@ -61,7 +61,7 @@ export default function VietnameseGameTable({ children }: VietnameseGameTablePro
       />
 
       {/* 4. Physical Board Wrapper with Enhanced 3D Shadow */}
-      <div className="relative z-10 filter drop-shadow-[0_25px_45px_rgba(0,0,0,0.85)] max-w-full">
+      <div className="relative z-10 filter drop-shadow-[0_25px_45px_rgba(0,0,0,0.85)] max-w-full max-h-full flex items-center justify-center">
         {children}
       </div>
     </main>

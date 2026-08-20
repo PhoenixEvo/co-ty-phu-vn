@@ -17,19 +17,19 @@ export default function TransportTile({ space, edge, owner }: TransportTileProps
 
   if (edge === 'bottom') {
     return (
-      <div className="w-full h-full flex flex-col justify-between items-center p-0.5 bg-white relative text-center select-none group">
-        <div className="w-full h-7 md:h-9 rounded-xs overflow-hidden mt-0.5">
+      <div className="w-full h-full flex flex-col justify-between items-center p-1 bg-white relative text-center select-none group">
+        <div className="w-full h-8 md:h-10 lg:h-12 rounded-xs overflow-hidden mt-0.5 shadow-2xs">
           {artwork?.renderThumbnail ? (
             artwork.renderThumbnail('w-full h-full')
           ) : (
-            <span className="text-base leading-none">🚌</span>
+            <span className="text-lg leading-none">🚌</span>
           )}
         </div>
         <div className="flex flex-col items-center my-auto">
-          <span className="text-[6.5px] font-bold text-slate-500 uppercase tracking-tighter">BẾN XE</span>
-          <span className="text-[8px] md:text-[9px] font-black text-slate-900 uppercase leading-tight">{stationName}</span>
+          <span className="text-[7.5px] md:text-[8.5px] font-bold text-slate-500 uppercase tracking-tighter">BẾN XE</span>
+          <span className="text-[9px] md:text-[10.5px] lg:text-[11.5px] font-black text-slate-900 uppercase leading-tight">{stationName}</span>
         </div>
-        <div className="font-mono font-black text-[8px] md:text-[9px] text-slate-800 bg-slate-100 px-1 py-0.2 rounded border border-slate-200 shadow-2xs mt-auto">
+        <div className="font-mono font-black text-[8.5px] md:text-[10px] lg:text-[11px] text-slate-800 bg-slate-100 px-1.5 py-0.2 rounded border border-slate-200 shadow-2xs mt-auto">
           ${space.price}
         </div>
       </div>
@@ -38,19 +38,19 @@ export default function TransportTile({ space, edge, owner }: TransportTileProps
 
   if (edge === 'top') {
     return (
-      <div className="w-full h-full flex flex-col justify-between items-center p-0.5 bg-white relative text-center select-none group">
-        <div className="font-mono font-black text-[8px] md:text-[9px] text-slate-800 bg-slate-100 px-1 py-0.2 rounded border border-slate-200 shadow-2xs mb-0.5">
+      <div className="w-full h-full flex flex-col justify-between items-center p-1 bg-white relative text-center select-none group">
+        <div className="font-mono font-black text-[8.5px] md:text-[10px] lg:text-[11px] text-slate-800 bg-slate-100 px-1.5 py-0.2 rounded border border-slate-200 shadow-2xs mb-0.5">
           ${space.price}
         </div>
         <div className="flex flex-col items-center my-auto">
-          <span className="text-[6.5px] font-bold text-slate-500 uppercase tracking-tighter">BẾN XE</span>
-          <span className="text-[8px] md:text-[9px] font-black text-slate-900 uppercase leading-tight">{stationName}</span>
+          <span className="text-[7.5px] md:text-[8.5px] font-bold text-slate-500 uppercase tracking-tighter">BẾN XE</span>
+          <span className="text-[9px] md:text-[10.5px] lg:text-[11.5px] font-black text-slate-900 uppercase leading-tight">{stationName}</span>
         </div>
-        <div className="w-full h-7 md:h-9 rounded-xs overflow-hidden mb-0.5">
+        <div className="w-full h-8 md:h-10 lg:h-12 rounded-xs overflow-hidden mb-0.5 shadow-2xs">
           {artwork?.renderThumbnail ? (
             artwork.renderThumbnail('w-full h-full')
           ) : (
-            <span className="text-base leading-none">🚌</span>
+            <span className="text-lg leading-none">🚌</span>
           )}
         </div>
       </div>
@@ -59,20 +59,20 @@ export default function TransportTile({ space, edge, owner }: TransportTileProps
 
   if (edge === 'left') {
     return (
-      <div className="w-full h-full flex flex-row justify-between items-center p-0.5 bg-white relative select-none group">
+      <div className="w-full h-full flex flex-row justify-between items-center p-1 bg-white relative select-none group">
         <div className="flex-1 flex flex-col justify-between items-center h-full text-center min-w-0">
           <div className="flex flex-col items-center mt-0.5">
-            <span className="text-[6.5px] font-bold text-slate-500 uppercase tracking-tighter">BẾN XE</span>
-            <span className="text-[7.5px] md:text-[8.5px] font-black text-slate-900 uppercase leading-tight">{stationName}</span>
+            <span className="text-[7.5px] md:text-[8.5px] font-bold text-slate-500 uppercase tracking-tighter">BẾN XE</span>
+            <span className="text-[8.5px] md:text-[10px] lg:text-[11px] font-black text-slate-900 uppercase leading-tight">{stationName}</span>
           </div>
-          <div className="w-12 md:w-16 h-5 md:h-6 my-auto rounded-xs overflow-hidden">
+          <div className="w-14 md:w-18 lg:w-22 h-6 md:h-7 lg:h-8 my-auto rounded-xs overflow-hidden shadow-2xs">
             {artwork?.renderThumbnail ? (
               artwork.renderThumbnail('w-full h-full')
             ) : (
-              <span className="text-sm">🚌</span>
+              <span className="text-base">🚌</span>
             )}
           </div>
-          <div className="font-mono font-black text-[7.5px] md:text-[8.5px] text-slate-800 bg-slate-100 px-1 py-0.2 rounded border border-slate-200 shadow-2xs mt-auto">
+          <div className="font-mono font-black text-[8px] md:text-[9.5px] lg:text-[10.5px] text-slate-800 bg-slate-100 px-1.5 py-0.2 rounded border border-slate-200 shadow-2xs mt-auto">
             ${space.price}
           </div>
         </div>
@@ -82,20 +82,20 @@ export default function TransportTile({ space, edge, owner }: TransportTileProps
 
   // Right Edge
   return (
-    <div className="w-full h-full flex flex-row justify-between items-center p-0.5 bg-white relative select-none group">
+    <div className="w-full h-full flex flex-row justify-between items-center p-1 bg-white relative select-none group">
       <div className="flex-1 flex flex-col justify-between items-center h-full text-center min-w-0">
         <div className="flex flex-col items-center mt-0.5">
-          <span className="text-[6.5px] font-bold text-slate-500 uppercase tracking-tighter">BẾN XE</span>
-          <span className="text-[7.5px] md:text-[8.5px] font-black text-slate-900 uppercase leading-tight">{stationName}</span>
+          <span className="text-[7.5px] md:text-[8.5px] font-bold text-slate-500 uppercase tracking-tighter">BẾN XE</span>
+          <span className="text-[8.5px] md:text-[10px] lg:text-[11px] font-black text-slate-900 uppercase leading-tight">{stationName}</span>
         </div>
-        <div className="w-12 md:w-16 h-5 md:h-6 my-auto rounded-xs overflow-hidden">
+        <div className="w-14 md:w-18 lg:w-22 h-6 md:h-7 lg:h-8 my-auto rounded-xs overflow-hidden shadow-2xs">
           {artwork?.renderThumbnail ? (
             artwork.renderThumbnail('w-full h-full')
           ) : (
-            <span className="text-sm">🚌</span>
+            <span className="text-base">🚌</span>
           )}
         </div>
-        <div className="font-mono font-black text-[7.5px] md:text-[8.5px] text-slate-800 bg-slate-100 px-1 py-0.2 rounded border border-slate-200 shadow-2xs mt-auto">
+        <div className="font-mono font-black text-[8px] md:text-[9.5px] lg:text-[10.5px] text-slate-800 bg-slate-100 px-1.5 py-0.2 rounded border border-slate-200 shadow-2xs mt-auto">
           ${space.price}
         </div>
       </div>
