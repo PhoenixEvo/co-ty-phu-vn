@@ -24,46 +24,48 @@ const COLOR_MAP: Record<PropertySpace['colorGroup'], string> = {
   'dark-blue': 'bg-blue-800',
 };
 
-// Render Houses or Hotel on the color strip
+// High-contrast, vibrant Building Indicator for Houses and Hotels
 function BuildingIndicator({ houseCount, owner }: { houseCount: number; owner: Player | null | undefined }) {
   if (!owner) return null;
 
   if (houseCount === 5) {
-    // Hotel (Red / Gold Hotel Badge)
+    // Hotel: Luxury Red-Gold Badge with Hotel Icon
     return (
-      <div className="flex items-center justify-center gap-1 z-10 animate-in zoom-in-50 duration-200">
-        <div className="bg-red-700 text-amber-300 font-black text-[8px] md:text-[9px] px-1.5 py-0.2 rounded-md shadow-xs border border-amber-300 flex items-center gap-0.5 leading-none">
-          <span>🏨</span>
-          <span className="font-mono text-[7px] md:text-[8px]">KS</span>
+      <div className="flex items-center justify-center z-10 animate-in zoom-in-50 duration-200">
+        <div className="bg-linear-to-r from-red-600 to-rose-700 text-amber-300 font-black text-[8px] md:text-[9.5px] px-1.5 py-0.5 rounded-md shadow-md border-1.5 border-amber-300 flex items-center gap-0.5 leading-none">
+          <span className="text-[10px] md:text-xs leading-none">🏨</span>
+          <span className="font-mono text-[7px] md:text-[8px] font-black text-amber-200">KS</span>
         </div>
       </div>
     );
   }
 
   if (houseCount >= 1 && houseCount <= 4) {
-    // 1-4 Green Houses
+    // 1-4 Green Houses inside dark backing so green houses pop with 100% clarity
     return (
-      <div className="flex items-center justify-center gap-0.5 z-10 animate-in zoom-in-50 duration-200">
+      <div className="flex items-center justify-center gap-0.5 z-10 animate-in zoom-in-50 duration-200 bg-slate-950/85 px-1 py-0.5 rounded-md border border-emerald-400 shadow-md">
         {Array.from({ length: houseCount }).map((_, i) => (
-          <div 
+          <span 
             key={i} 
-            className="w-2.5 h-2.5 md:w-3 md:h-3 bg-emerald-600 border border-white rounded-xs shadow-xs flex items-center justify-center text-[7px] text-white leading-none font-bold"
+            className="text-[9px] md:text-[10.5px] leading-none drop-shadow"
             title={`${houseCount} Nhà`}
           >
             🏠
-          </div>
+          </span>
         ))}
       </div>
     );
   }
 
-  // 0 Houses: Show owner avatar indicator
+  // 0 Houses: Owner Avatar Dot with Initial
   return (
     <div 
-      className="w-2.5 h-2.5 md:w-3 md:h-3 rounded-full border border-white shadow-xs"
+      className="w-3 h-3 md:w-3.5 md:h-3.5 rounded-full border-2 border-white shadow-md flex items-center justify-center text-[7px] md:text-[8px] text-white font-black"
       style={{ backgroundColor: owner.tokenColor }}
       title={`Chủ: ${owner.nickname}`}
-    />
+    >
+      {owner.nickname.charAt(0).toUpperCase()}
+    </div>
   );
 }
 
@@ -78,7 +80,7 @@ export default function PropertyTile({ space, edge, owner, ownership }: Property
     return (
       <div className="w-full h-full flex flex-col justify-between bg-white relative select-none group overflow-hidden">
         {/* Color Strip (Top / Inner Edge) */}
-        <div className={`h-[18%] w-full ${colorClass} shrink-0 flex items-center justify-center relative shadow-2xs px-0.5`}>
+        <div className={`h-[20%] w-full ${colorClass} shrink-0 flex items-center justify-center relative shadow-2xs px-0.5`}>
           <BuildingIndicator houseCount={houseCount} owner={owner} />
         </div>
 
@@ -89,7 +91,7 @@ export default function PropertyTile({ space, edge, owner, ownership }: Property
           </span>
 
           {/* Photo Thumbnail */}
-          <div className="w-full flex-1 min-h-0 max-h-[32px] md:max-h-[40px] my-auto rounded-xs overflow-hidden shrink-0 shadow-2xs">
+          <div className="w-full flex-1 min-h-0 max-h-[30px] md:max-h-[38px] my-auto rounded-xs overflow-hidden shrink-0 shadow-2xs">
             {artwork?.renderThumbnail ? (
               artwork.renderThumbnail('w-full h-full object-cover')
             ) : space.landmarkIcon ? (
@@ -118,7 +120,7 @@ export default function PropertyTile({ space, edge, owner, ownership }: Property
           </div>
 
           {/* Photo Thumbnail */}
-          <div className="w-full flex-1 min-h-0 max-h-[32px] md:max-h-[40px] my-auto rounded-xs overflow-hidden shrink-0 shadow-2xs">
+          <div className="w-full flex-1 min-h-0 max-h-[30px] md:max-h-[38px] my-auto rounded-xs overflow-hidden shrink-0 shadow-2xs">
             {artwork?.renderThumbnail ? (
               artwork.renderThumbnail('w-full h-full object-cover')
             ) : space.landmarkIcon ? (
@@ -132,7 +134,7 @@ export default function PropertyTile({ space, edge, owner, ownership }: Property
         </div>
 
         {/* Color Strip (Bottom / Inner Edge) */}
-        <div className={`h-[18%] w-full ${colorClass} shrink-0 flex items-center justify-center relative shadow-2xs px-0.5`}>
+        <div className={`h-[20%] w-full ${colorClass} shrink-0 flex items-center justify-center relative shadow-2xs px-0.5`}>
           <BuildingIndicator houseCount={houseCount} owner={owner} />
         </div>
       </div>
@@ -150,7 +152,7 @@ export default function PropertyTile({ space, edge, owner, ownership }: Property
           </span>
 
           {/* Photo Thumbnail */}
-          <div className="w-[85%] flex-1 min-h-0 max-h-[24px] md:max-h-[30px] my-auto rounded-xs overflow-hidden shrink-0 shadow-2xs">
+          <div className="w-[85%] flex-1 min-h-0 max-h-[22px] md:max-h-[28px] my-auto rounded-xs overflow-hidden shrink-0 shadow-2xs">
             {artwork?.renderThumbnail ? (
               artwork.renderThumbnail('w-full h-full object-cover')
             ) : space.landmarkIcon ? (
@@ -165,7 +167,7 @@ export default function PropertyTile({ space, edge, owner, ownership }: Property
         </div>
 
         {/* Color Strip (Right / Inner Edge towards center) */}
-        <div className={`w-[18%] h-full ${colorClass} shrink-0 flex flex-col items-center justify-center relative shadow-2xs py-0.5`}>
+        <div className={`w-[20%] h-full ${colorClass} shrink-0 flex flex-col items-center justify-center relative shadow-2xs py-0.5`}>
           <BuildingIndicator houseCount={houseCount} owner={owner} />
         </div>
       </div>
@@ -176,7 +178,7 @@ export default function PropertyTile({ space, edge, owner, ownership }: Property
   return (
     <div className="w-full h-full flex flex-row justify-between bg-white relative select-none group overflow-hidden">
       {/* Color Strip (Left / Inner Edge towards center) */}
-      <div className={`w-[18%] h-full ${colorClass} shrink-0 flex flex-col items-center justify-center relative shadow-2xs py-0.5`}>
+      <div className={`w-[20%] h-full ${colorClass} shrink-0 flex flex-col items-center justify-center relative shadow-2xs py-0.5`}>
         <BuildingIndicator houseCount={houseCount} owner={owner} />
       </div>
 
@@ -187,7 +189,7 @@ export default function PropertyTile({ space, edge, owner, ownership }: Property
         </span>
 
         {/* Photo Thumbnail */}
-        <div className="w-[85%] flex-1 min-h-0 max-h-[24px] md:max-h-[30px] my-auto rounded-xs overflow-hidden shrink-0 shadow-2xs">
+        <div className="w-[85%] flex-1 min-h-0 max-h-[22px] md:max-h-[28px] my-auto rounded-xs overflow-hidden shrink-0 shadow-2xs">
           {artwork?.renderThumbnail ? (
             artwork.renderThumbnail('w-full h-full object-cover')
           ) : space.landmarkIcon ? (

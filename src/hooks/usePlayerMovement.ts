@@ -1,89 +1,114 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { Player, GameState } from '@/game/types';
+import { GameState } from '@/game/types';
 import { MOVEMENT_CONFIG, calculateMovementPath } from '@/game/movementConfig';
 import { sounds } from '@/utils/sound';
 
+interface MovementTask {
+  playerId: string;
+  fromPos: number;
+  toPos: number;
+}
+
 export function usePlayerMovement(gameState: GameState | null) {
-  // Map of playerId -> current visual position on the board
   const [visualPositions, setVisualPositions] = useState<Record<string, number>>({});
   const [isMoving, setIsMoving] = useState(false);
   const [activeDestination, setActiveDestination] = useState<number | null>(null);
   const [steppingPlayerId, setSteppingPlayerId] = useState<string | null>(null);
 
-  // Keep track of the last known positions to detect server state changes
-  const prevPositionsRef = useRef<Record<string, number>>({});
-  const isAnimatingRef = useRef(false);
+  const lastKnownPositions = useRef<Record<string, number>>({});
+  const movementQueue = useRef<MovementTask[]>([]);
+  const isProcessingQueue = useRef(false);
+
+  // Process the animation queue sequentially
+  const processNextInQueue = () => {
+    if (movementQueue.current.length === 0) {
+      isProcessingQueue.current = false;
+      setIsMoving(false);
+      setSteppingPlayerId(null);
+      setActiveDestination(null);
+      return;
+    }
+
+    isProcessingQueue.current = true;
+    const task = movementQueue.current.shift()!;
+    const { playerId, fromPos, toPos } = task;
+
+    // Direct teleport if card or jail sent directly without normal path
+    const path = calculateMovementPath(fromPos, toPos);
+
+    if (path.length === 0 || path.length > 20) {
+      // Direct jump (e.g. jail or card teleport)
+      setVisualPositions(prev => ({ ...prev, [playerId]: toPos }));
+      setTimeout(processNextInQueue, 100);
+      return;
+    }
+
+    setIsMoving(true);
+    setSteppingPlayerId(playerId);
+    setActiveDestination(toPos);
+
+    let stepIndex = 0;
+
+    const executeStep = () => {
+      if (stepIndex < path.length) {
+        const currentStepPos = path[stepIndex];
+
+        setVisualPositions(prev => ({
+          ...prev,
+          [playerId]: currentStepPos
+        }));
+
+        // Play step tick sound
+        sounds.playDiceRoll();
+
+        stepIndex++;
+        setTimeout(executeStep, MOVEMENT_CONFIG.stepDuration);
+      } else {
+        // Reached destination for this task
+        setSteppingPlayerId(null);
+
+        // Landing bounce effect before moving to the next task
+        setTimeout(() => {
+          setActiveDestination(null);
+          processNextInQueue();
+        }, MOVEMENT_CONFIG.landingDuration);
+      }
+    };
+
+    // Initial delay before starting the hops
+    setTimeout(executeStep, MOVEMENT_CONFIG.stepDelay);
+  };
 
   useEffect(() => {
     if (!gameState || !gameState.players.length) return;
 
-    // Initialize visual positions if not set yet (e.g. on first load / refresh)
-    if (Object.keys(prevPositionsRef.current).length === 0) {
-      const initialMap: Record<string, number> = {};
-      gameState.players.forEach(p => {
-        initialMap[p.id] = p.position;
-      });
-      prevPositionsRef.current = initialMap;
-      setVisualPositions(initialMap);
-      return;
+    let hasNewTasks = false;
+
+    // Check each player's position against their last known position
+    for (const player of gameState.players) {
+      const prevPos = lastKnownPositions.current[player.id];
+
+      if (prevPos === undefined) {
+        // First time seeing this player: initialize position immediately
+        lastKnownPositions.current[player.id] = player.position;
+        setVisualPositions(prev => ({ ...prev, [player.id]: player.position }));
+      } else if (prevPos !== player.position) {
+        // Player moved! Add to sequential movement queue
+        movementQueue.current.push({
+          playerId: player.id,
+          fromPos: prevPos,
+          toPos: player.position
+        });
+        lastKnownPositions.current[player.id] = player.position;
+        hasNewTasks = true;
+      }
     }
 
-    // Check if any player's authoritative position changed
-    for (const player of gameState.players) {
-      const prevPos = prevPositionsRef.current[player.id] ?? player.position;
-      const targetPos = player.position;
-
-      if (prevPos !== targetPos && !isAnimatingRef.current) {
-        // Calculate intermediate hops (e.g. 8 -> 9 -> 10 -> 11 -> 12 -> 13)
-        const path = calculateMovementPath(prevPos, targetPos);
-        
-        if (path.length > 0) {
-          isAnimatingRef.current = true;
-          setIsMoving(true);
-          setSteppingPlayerId(player.id);
-          setActiveDestination(targetPos);
-
-          // Animate step by step
-          let stepIndex = 0;
-
-          const executeStep = () => {
-            if (stepIndex < path.length) {
-              const currentStepPos = path[stepIndex];
-
-              setVisualPositions(prev => ({
-                ...prev,
-                [player.id]: currentStepPos
-              }));
-
-              // Small step sound
-              sounds.playDiceRoll();
-
-              stepIndex++;
-              setTimeout(executeStep, MOVEMENT_CONFIG.stepDuration);
-            } else {
-              // Reached destination!
-              prevPositionsRef.current[player.id] = targetPos;
-              setSteppingPlayerId(null);
-              
-              // Landing pause effect
-              setTimeout(() => {
-                setIsMoving(false);
-                setActiveDestination(null);
-                isAnimatingRef.current = false;
-              }, MOVEMENT_CONFIG.landingDuration);
-            }
-          };
-
-          // Short delay before starting movement
-          setTimeout(executeStep, MOVEMENT_CONFIG.stepDelay);
-        } else {
-          prevPositionsRef.current[player.id] = targetPos;
-          setVisualPositions(prev => ({ ...prev, [player.id]: targetPos }));
-        }
-        break; // Process one movement at a time
-      }
+    // If there are new tasks and the processor is idle, start it
+    if (hasNewTasks && !isProcessingQueue.current) {
+      processNextInQueue();
     }
   }, [gameState]);
 

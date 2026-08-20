@@ -1,7 +1,7 @@
 export const MOVEMENT_CONFIG = {
-  stepDuration: 360,     // ms per step (smooth, deliberate stepping so players can track each tile)
-  stepDelay: 200,        // ms delay before first step starts
-  landingDuration: 400,  // ms landing pause before showing card/action
+  stepDuration: 480,     // ms per step (slower, deliberate rhythm so players can clearly follow each tile)
+  stepDelay: 250,        // ms delay before first step starts
+  landingDuration: 500,  // ms landing pause before resolving space / showing action
 };
 
 /**
