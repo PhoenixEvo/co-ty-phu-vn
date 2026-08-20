@@ -15,7 +15,9 @@ import InviteModal from '@/components/modals/InviteModal';
 import SettingsModal from '@/components/modals/SettingsModal';
 import RulesModal from '@/components/modals/RulesModal';
 import LocationLandingReveal from '@/components/board/LocationLandingReveal';
+import VietnameseGameTable from '@/components/board/VietnameseGameTable';
 import { BOARD_SPACES } from '@/game/boardConfig';
+import { validateLocationArtworkRegistry } from '@/game/locationArtworks';
 import { usePlayerMovement } from '@/hooks/usePlayerMovement';
 import { Users, Crown, Sparkles, Copy, Check, Play, ShieldAlert } from 'lucide-react';
 import { sounds } from '@/utils/sound';
@@ -41,6 +43,10 @@ export default function RoomPage() {
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isRulesOpen, setIsRulesOpen] = useState(false);
   const [copiedLobby, setCopiedLobby] = useState(false);
+
+  useEffect(() => {
+    validateLocationArtworkRegistry(BOARD_SPACES);
+  }, []);
 
   useEffect(() => {
     connect(roomId);
@@ -269,10 +275,10 @@ export default function RoomPage() {
       />
 
       {/* 2. Main Game Viewport */}
-      <div className="flex-1 flex flex-col md:flex-row gap-3 p-2 md:p-3 overflow-hidden bg-[#0c2419]">
+      <div className="flex-1 flex flex-col md:flex-row gap-3 p-2 md:p-3 overflow-hidden bg-[#071912]">
         
-        {/* Left: Dominant Game Board Container (Felt Tabletop Look) */}
-        <main className="flex-1 flex items-center justify-center overflow-auto p-1 relative rounded-2xl bg-[radial-gradient(#1a4d36_1px,transparent_1px)] [background-size:24px_24px] shadow-inner">
+        {/* Left: Dominant Game Board Container (Vietnamese Game Table Aesthetic) */}
+        <VietnameseGameTable>
           <GameBoard 
             state={gameState} 
             playerId={playerId} 
@@ -281,7 +287,7 @@ export default function RoomPage() {
             activeDestination={activeDestination}
             steppingPlayerId={steppingPlayerId}
           />
-        </main>
+        </VietnameseGameTable>
         
         {/* Right: Information-Dense Sidebar */}
         <aside className="w-full md:w-84 lg:w-96 flex flex-col gap-2.5 shrink-0 overflow-y-auto pr-0.5">

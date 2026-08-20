@@ -544,3 +544,23 @@ export const LOCATION_ARTWORKS: Record<string, LocationArtwork> = {
 export function getLocationArtwork(spaceId: string): LocationArtwork | null {
   return LOCATION_ARTWORKS[spaceId] || null;
 }
+
+export function validateLocationArtworkRegistry(spaces: any[]) {
+  if (process.env.NODE_ENV !== 'production') {
+    const propertyAndTransportSpaces = spaces.filter(s => s.type === 'property' || s.type === 'transport');
+    let validCount = 0;
+    let missingCount = 0;
+
+    propertyAndTransportSpaces.forEach(s => {
+      if (LOCATION_ARTWORKS[s.id]) {
+        validCount++;
+      } else {
+        missingCount++;
+        console.warn(`[LocationArtwork] ⚠ Missing artwork for space: "${s.name}" (ID: "${s.id}")`);
+      }
+    });
+
+    console.log(`[LocationArtwork Validation] ✓ ${validCount} location images valid, ${missingCount} missing.`);
+  }
+}
+
