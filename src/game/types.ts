@@ -121,9 +121,11 @@ export interface GameState {
     type: 'buy' | 'upgrade' | 'rent' | 'card' | 'tax' | 'jail' | 'pass_go';
   } | null;
   awaitingAction?: {
-    type: 'buy_property' | 'upgrade_property' | 'pay_tax' | 'card_dismiss';
+    type: 'buy_property' | 'upgrade_property' | 'pay_tax' | 'pay_rent' | 'card_dismiss';
     spaceIndex?: number;
     card?: Card;
+    amount?: number;
+    creditorId?: string; // Player ID or 'bank'
   } | null;
 }
 
@@ -139,6 +141,8 @@ export type ClientAction =
   | { type: 'MORTGAGE_PROPERTY'; payload: { spaceId: string } }
   | { type: 'UNMORTGAGE_PROPERTY'; payload: { spaceId: string } }
   | { type: 'PAY_TAX'; payload?: { percentage: boolean } }
+  | { type: 'PAY_RENT' }
+  | { type: 'DECLARE_BANKRUPTCY' }
   | { type: 'DISMISS_CARD' }
   | { type: 'END_TURN' }
   | { type: 'LEAVE_GAME' };

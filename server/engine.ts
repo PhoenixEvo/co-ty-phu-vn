@@ -271,21 +271,32 @@ export function gameReducer(state: GameState, action: ClientAction, playerId: st
               const rent = calculateRent(draft, space, d1 + d2);
               
               if (rent > 0) {
-                player.money -= rent;
-                owner.money += rent;
-                logEvent(draft, `${player.nickname} trả ${formatMoney(rent)} tiền thuê cho ${owner.nickname}.`, 'rent', playerId, -rent);
-                setCenterBanner(draft, `💸 ${player.nickname} TRẢ ${formatMoney(rent)} TIỀN THUÊ`, 'rent');
-                
-                if (player.money < 0) {
-                  player.isBankrupt = true;
-                  logEvent(draft, `${player.nickname} đã phá sản!`, 'bankrupt', playerId);
-                  setCenterBanner(draft, `💀 ${player.nickname} ĐÃ PHÁ SẢN!`, 'tax');
+                if (player.money >= rent) {
+                  // Sufficient cash: Pay rent immediately
+                  player.money -= rent;
+                  owner.money += rent;
+                  logEvent(draft, `${player.nickname} trả ${formatMoney(rent)} tiền thuê cho ${owner.nickname}.`, 'rent', playerId, -rent);
+                  setCenterBanner(draft, `💸 ${player.nickname} TRẢ ${formatMoney(rent)} TIỀN THUÊ`, 'rent');
+                  nextPlayer(draft);
+                } else {
+                  // INSUFFICIENT CASH: DO NOT BANKRUPT IMMEDIATELY! Enter insolvency debt settlement state
+                  draft.turnState = 'AWAITING_ACTION';
+                  draft.awaitingAction = {
+                    type: 'pay_rent',
+                    spaceIndex: player.position,
+                    amount: rent,
+                    creditorId: owner.id
+                  };
+                  logEvent(draft, `⚠️ ${player.nickname} không đủ tiền mặt trả ${formatMoney(rent)} tiền thuê cho ${owner.nickname}. Cần thế chấp tài sản!`);
+                  setCenterBanner(draft, `⚠️ ${player.nickname} CẦN THẾ CHẤP TRẢ NỢ!`, 'rent');
                 }
               } else {
                 logEvent(draft, `${space.name} đang bị thế chấp nên không thu tiền thuê.`);
+                nextPlayer(draft);
               }
+            } else {
+              nextPlayer(draft);
             }
-            nextPlayer(draft);
           } else {
             // Player landed on OWN property! Allow house upgrade if it's a property and < 5 houses and not mortgaged
             if (space.type === 'property' && !ownership.isMortgaged && ownership.houseCount < 5) {
@@ -301,8 +312,14 @@ export function gameReducer(state: GameState, action: ClientAction, playerId: st
           draft.awaitingAction = { type: 'buy_property', spaceIndex: player.position };
         }
       } else if (space.type === 'tax') {
+        const spaceTax = (space as any).taxAmount || 1_000_000;
         draft.turnState = 'AWAITING_ACTION';
-        draft.awaitingAction = { type: 'pay_tax', spaceIndex: player.position };
+        draft.awaitingAction = { 
+          type: 'pay_tax', 
+          spaceIndex: player.position, 
+          amount: spaceTax, 
+          creditorId: 'bank' 
+        };
       } else if (space.type === 'go_to_jail') {
         player.position = 10;
         player.inJail = true;
@@ -440,6 +457,66 @@ export function gameReducer(state: GameState, action: ClientAction, playerId: st
       return draft;
     }
 
+    case 'PAY_RENT': {
+      if (draft.status !== 'playing' || !isCurrentTurn || draft.turnState !== 'AWAITING_ACTION') return draft;
+      if (!draft.awaitingAction || draft.awaitingAction.type !== 'pay_rent') return draft;
+      if (!player) return draft;
+
+      const { amount, creditorId } = draft.awaitingAction;
+      const rentAmount = amount || 0;
+      const creditor = draft.players.find(p => p.id === creditorId);
+
+      if (player.money >= rentAmount) {
+        player.money -= rentAmount;
+        if (creditor) creditor.money += rentAmount;
+        logEvent(draft, `${player.nickname} đã trả ${formatMoney(rentAmount)} tiền thuê cho ${creditor?.nickname || 'đối thủ'}.`, 'rent', playerId, -rentAmount);
+        setCenterBanner(draft, `💸 ${player.nickname} ĐÃ THANH TOÁN TIỀN THUÊ`, 'rent');
+        draft.awaitingAction = null;
+        nextPlayer(draft);
+      } else {
+        logEvent(draft, `${player.nickname} vẫn còn thiếu tiền! Hãy thế chấp thêm tài sản.`);
+      }
+      return draft;
+    }
+
+    case 'DECLARE_BANKRUPTCY': {
+      if (draft.status !== 'playing' || !isCurrentTurn || draft.turnState !== 'AWAITING_ACTION') return draft;
+      if (!player) return draft;
+
+      player.isBankrupt = true;
+      const creditorId = draft.awaitingAction?.creditorId;
+
+      if (creditorId && creditorId !== 'bank') {
+        const creditor = draft.players.find(p => p.id === creditorId);
+        if (creditor) {
+          // Transfer remaining cash
+          if (player.money > 0) creditor.money += player.money;
+          player.money = 0;
+
+          // Transfer all properties to creditor
+          Object.entries(draft.properties).forEach(([sId, o]) => {
+            if (o.ownerId === player.id) {
+              o.ownerId = creditor.id;
+            }
+          });
+          logEvent(draft, `💀 ${player.nickname} đã tuyên bố phá sản! Toàn bộ tài sản được chuyển cho ${creditor.nickname}.`, 'bankrupt', playerId);
+        }
+      } else {
+        // Bankrupt to Bank (Taxes): reset properties
+        Object.entries(draft.properties).forEach(([sId, o]) => {
+          if (o.ownerId === player.id) {
+            delete draft.properties[sId];
+          }
+        });
+        logEvent(draft, `💀 ${player.nickname} đã tuyên bố phá sản trước ngân hàng!`, 'bankrupt', playerId);
+      }
+
+      setCenterBanner(draft, `💀 ${player.nickname} ĐÃ PHÁ SẢN!`, 'tax');
+      draft.awaitingAction = null;
+      nextPlayer(draft);
+      return draft;
+    }
+
     case 'PAY_TAX': {
       if (draft.status !== 'playing' || !isCurrentTurn || draft.turnState !== 'AWAITING_ACTION') return draft;
       if (!draft.awaitingAction || draft.awaitingAction.type !== 'pay_tax') return draft;
@@ -452,17 +529,16 @@ export function gameReducer(state: GameState, action: ClientAction, playerId: st
         amount = Math.floor(player.money * 0.10);
       }
       
-      player.money -= amount;
-      logEvent(draft, `${player.nickname} đã nộp thuế ${formatMoney(amount)}.`, 'tax', playerId, -amount);
-      setCenterBanner(draft, `🧾 ${player.nickname} NỘP THUẾ ${formatMoney(amount)}`, 'tax');
-      
-      if (player.money < 0) {
-        player.isBankrupt = true;
-        logEvent(draft, `${player.nickname} đã phá sản do nộp thuế!`, 'bankrupt', playerId);
+      if (player.money >= amount) {
+        player.money -= amount;
+        logEvent(draft, `${player.nickname} đã nộp thuế ${formatMoney(amount)}.`, 'tax', playerId, -amount);
+        setCenterBanner(draft, `🧾 ${player.nickname} NỘP THUẾ ${formatMoney(amount)}`, 'tax');
+        draft.awaitingAction = null;
+        nextPlayer(draft);
+      } else {
+        logEvent(draft, `${player.nickname} không đủ tiền mặt nộp thuế! Cần thế chấp tài sản.`);
       }
       
-      draft.awaitingAction = null;
-      nextPlayer(draft);
       return draft;
     }
 
@@ -574,12 +650,22 @@ export function gameReducer(state: GameState, action: ClientAction, playerId: st
               const owner = draft.players.find(p => p.id === ownership.ownerId);
               if (owner && !owner.inJail && !ownership.isMortgaged) {
                 const rent = calculateRent(draft, destSpace, 7);
-                player.money -= rent;
-                owner.money += rent;
-                logEvent(draft, `${player.nickname} trả ${formatMoney(rent)} tiền thuê cho ${owner.nickname}.`, 'rent', playerId, -rent);
-                setCenterBanner(draft, `💸 ${player.nickname} TRẢ ${formatMoney(rent)} TIỀN THUÊ`, 'rent');
-                if (player.money < 0) {
-                  player.isBankrupt = true;
+                if (player.money >= rent) {
+                  player.money -= rent;
+                  owner.money += rent;
+                  logEvent(draft, `${player.nickname} trả ${formatMoney(rent)} tiền thuê cho ${owner.nickname}.`, 'rent', playerId, -rent);
+                  setCenterBanner(draft, `💸 ${player.nickname} TRẢ ${formatMoney(rent)} TIỀN THUÊ`, 'rent');
+                  nextPlayer(draft);
+                  return draft;
+                } else {
+                  draft.turnState = 'AWAITING_ACTION';
+                  draft.awaitingAction = {
+                    type: 'pay_rent',
+                    spaceIndex: targetPos,
+                    amount: rent,
+                    creditorId: owner.id
+                  };
+                  return draft;
                 }
               }
               nextPlayer(draft);
@@ -633,12 +719,22 @@ export function gameReducer(state: GameState, action: ClientAction, playerId: st
               const owner = draft.players.find(p => p.id === ownership.ownerId);
               if (owner && !owner.inJail && !ownership.isMortgaged) {
                 const rent = calculateRent(draft, destSpace, 7);
-                player.money -= rent;
-                owner.money += rent;
-                logEvent(draft, `${player.nickname} trả ${formatMoney(rent)} tiền thuê cho ${owner.nickname}.`, 'rent', playerId, -rent);
-                setCenterBanner(draft, `💸 ${player.nickname} TRẢ ${formatMoney(rent)} TIỀN THUÊ`, 'rent');
-                if (player.money < 0) {
-                  player.isBankrupt = true;
+                if (player.money >= rent) {
+                  player.money -= rent;
+                  owner.money += rent;
+                  logEvent(draft, `${player.nickname} trả ${formatMoney(rent)} tiền thuê cho ${owner.nickname}.`, 'rent', playerId, -rent);
+                  setCenterBanner(draft, `💸 ${player.nickname} TRẢ ${formatMoney(rent)} TIỀN THUÊ`, 'rent');
+                  nextPlayer(draft);
+                  return draft;
+                } else {
+                  draft.turnState = 'AWAITING_ACTION';
+                  draft.awaitingAction = {
+                    type: 'pay_rent',
+                    spaceIndex: targetPos,
+                    amount: rent,
+                    creditorId: owner.id
+                  };
+                  return draft;
                 }
               }
               nextPlayer(draft);
