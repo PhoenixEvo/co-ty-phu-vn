@@ -14,6 +14,8 @@ import GameOverModal from '@/components/modals/GameOverModal';
 import InviteModal from '@/components/modals/InviteModal';
 import SettingsModal from '@/components/modals/SettingsModal';
 import RulesModal from '@/components/modals/RulesModal';
+import LocationLandingReveal from '@/components/board/LocationLandingReveal';
+import { BOARD_SPACES } from '@/game/boardConfig';
 import { usePlayerMovement } from '@/hooks/usePlayerMovement';
 import { Users, Crown, Sparkles, Copy, Check, Play, ShieldAlert } from 'lucide-react';
 import { sounds } from '@/utils/sound';
@@ -308,6 +310,14 @@ export default function RoomPage() {
       </div>
 
       {/* Modals */}
+      {/* 0. Destination Landing Reveal Toast */}
+      {!isMoving && gameState.turnState === 'AWAITING_ACTION' && gameState.awaitingAction?.spaceIndex !== undefined && (
+        <LocationLandingReveal 
+          space={BOARD_SPACES[gameState.awaitingAction.spaceIndex]} 
+          isVisible={true}
+        />
+      )}
+
       {/* 1. Chance & Fortune Card Draw Modal (Only display after movement finishes) */}
       {!isMoving && gameState.lastDrawnCard && (
         <CardDrawModal 

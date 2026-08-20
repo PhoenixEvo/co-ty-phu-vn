@@ -1,7 +1,8 @@
 'use client';
 
 import { BoardSpace, PropertySpace, TransportSpace, UtilitySpace, GameState } from '@/game/types';
-import { X, Building2, User, DollarSign, MapPin, Compass } from 'lucide-react';
+import { getLocationArtwork } from '@/game/locationArtworks';
+import { X, Building2, User, DollarSign, MapPin, Sparkles } from 'lucide-react';
 
 interface PropertyDetailModalProps {
   space: BoardSpace | null;
@@ -14,6 +15,7 @@ export default function PropertyDetailModal({ space, state, onClose }: PropertyD
 
   const ownership = state.properties[space.id];
   const owner = ownership ? state.players.find(p => p.id === ownership.ownerId) : null;
+  const artwork = getLocationArtwork(space.id);
 
   const getColorBg = (color?: string) => {
     switch (color) {
@@ -25,7 +27,7 @@ export default function PropertyDetailModal({ space, state, onClose }: PropertyD
       case 'yellow': return 'bg-yellow-400 text-slate-900';
       case 'cyan': return 'bg-sky-500 text-white';
       case 'dark-blue': return 'bg-blue-800 text-white';
-      default: return 'bg-slate-800 text-white';
+      default: return 'bg-slate-900 text-white';
     }
   };
 
@@ -35,44 +37,66 @@ export default function PropertyDetailModal({ space, state, onClose }: PropertyD
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/65 backdrop-blur-xs animate-in fade-in duration-200 select-none">
       <div className="bg-white rounded-3xl shadow-2xl border-2 border-slate-300 w-full max-w-sm overflow-hidden flex flex-col text-slate-800 animate-in zoom-in-95 duration-200">
         
+        {/* Top Hero Artwork Banner */}
+        {artwork?.renderHero && (
+          <div className="w-full relative border-b border-slate-200">
+            {artwork.renderHero('w-full h-36')}
+            <div className="absolute top-2.5 left-2.5 bg-black/50 backdrop-blur-xs text-white text-[10px] font-bold px-2 py-0.5 rounded-full border border-white/20 flex items-center gap-1">
+              <span>{artwork.regionLabel}</span>
+            </div>
+            <button 
+              onClick={onClose}
+              className="absolute top-2.5 right-2.5 p-1.5 rounded-full bg-black/40 hover:bg-black/60 text-white transition active:scale-95 cursor-pointer shadow-md"
+            >
+              <X size={16} />
+            </button>
+          </div>
+        )}
+
         {/* Header Color Band */}
-        <div className={`p-4 text-center relative ${space.type === 'property' ? getColorBg(pSpace.colorGroup) : 'bg-slate-900 text-white'}`}>
-          <button 
-            onClick={onClose}
-            className="absolute top-3 right-3 p-1.5 rounded-full bg-black/20 hover:bg-black/40 text-white transition active:scale-95 cursor-pointer"
-          >
-            <X size={18} />
-          </button>
+        <div className={`p-3.5 text-center relative ${space.type === 'property' ? getColorBg(pSpace.colorGroup) : 'bg-slate-900 text-white'}`}>
+          {!artwork?.renderHero && (
+            <button 
+              onClick={onClose}
+              className="absolute top-3 right-3 p-1.5 rounded-full bg-black/20 hover:bg-black/40 text-white transition active:scale-95 cursor-pointer"
+            >
+              <X size={16} />
+            </button>
+          )}
           
-          <div className="text-[11px] font-black tracking-widest uppercase opacity-85">
+          <div className="text-[10px] font-black tracking-widest uppercase opacity-85">
             {space.type === 'property' ? 'BẰNG KHOÁN NHÀ ĐẤT' : space.type === 'transport' ? 'BẾN XE VẬN TẢI' : 'DỊCH VỤ CÔNG CỘNG'}
           </div>
           
-          <div className="flex items-center justify-center gap-2 mt-1">
-            {pSpace.landmarkIcon && <span className="text-2xl drop-shadow">{pSpace.landmarkIcon}</span>}
-            <h2 className="text-2xl font-black uppercase tracking-wide">{space.name}</h2>
+          <div className="flex items-center justify-center gap-2 mt-0.5">
+            {artwork?.renderThumbnail ? (
+              <div className="w-6 h-6 bg-white/20 p-0.5 rounded-full">
+                {artwork.renderThumbnail('w-full h-full')}
+              </div>
+            ) : null}
+            <h2 className="text-xl font-black uppercase tracking-wide">{space.name}</h2>
           </div>
           
           {(space as any).price && (
-            <div className="text-xs font-bold mt-1 opacity-90 font-mono">
+            <div className="text-xs font-bold mt-0.5 opacity-90 font-mono">
               Giá niêm yết: ${(space as any).price}
             </div>
           )}
         </div>
 
         {/* Card Body */}
-        <div className="p-4 space-y-3.5 text-sm overflow-y-auto max-h-[60vh]">
+        <div className="p-4 space-y-3 text-sm overflow-y-auto max-h-[50vh]">
           
-          {/* Landmark & Cultural Info snippet */}
-          {pSpace.landmark && (
+          {/* Subtitle & Cultural Quote */}
+          {artwork?.subtitle && (
             <div className="bg-amber-50/80 border border-amber-200/80 p-2.5 rounded-xl space-y-1">
               <div className="flex items-center gap-1.5 text-amber-900 font-bold text-xs">
-                <MapPin size={13} className="text-amber-600 shrink-0" />
-                <span>{pSpace.landmark}</span>
+                <Sparkles size={13} className="text-amber-600 shrink-0" />
+                <span>{artwork.subtitle}</span>
               </div>
-              {pSpace.description && (
+              {artwork.culturalSnippet && (
                 <p className="text-[11px] text-slate-600 leading-snug pl-4 italic">
-                  "{pSpace.description}"
+                  "{artwork.culturalSnippet}"
                 </p>
               )}
             </div>
@@ -109,7 +133,7 @@ export default function PropertyDetailModal({ space, state, onClose }: PropertyD
               </div>
 
               {/* Building costs */}
-              <div className="grid grid-cols-2 gap-2 text-xs bg-slate-50 p-2.5 rounded-xl border border-slate-200">
+              <div className="grid grid-cols-2 gap-2 text-xs bg-slate-50 p-2 rounded-xl border border-slate-200">
                 <div>
                   <span className="text-slate-500 block text-[10px]">Chi phí xây nhà:</span>
                   <span className="font-bold text-slate-800 font-mono">${pSpace.houseCost} / nhà</span>

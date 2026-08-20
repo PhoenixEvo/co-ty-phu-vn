@@ -28,6 +28,8 @@ export interface PropertySpace extends BaseSpace {
   hotelRent: number;
   houseCost: number;
   landmark?: string;
+  subtitle?: string;
+  locationKey?: string;
   region?: 'north' | 'central' | 'south';
   landmarkIcon?: string;
   description?: string;
@@ -38,6 +40,8 @@ export interface TransportSpace extends BaseSpace {
   price: number;
   baseRent: number;
   landmark?: string;
+  subtitle?: string;
+  locationKey?: string;
   region?: 'north' | 'central' | 'south';
   landmarkIcon?: string;
   description?: string;
