@@ -22,22 +22,44 @@ const server = http.createServer(app);
 // Initialize WebSocket server in noServer mode
 const wss = new WebSocketServer({ noServer: true });
 
-// CRITICAL: Register our WebSocket upgrade handler BEFORE Next.js gets a chance to.
-// Next.js 16.x auto-registers its own 'upgrade' handler via setupWebSocketHandler()
-// which would conflict with our /ws path. By using prependListener, we intercept first.
-server.prependListener('upgrade', (request, socket, head) => {
+// Register OUR WebSocket upgrade handler for /ws
+server.on('upgrade', (request, socket, head) => {
   const { pathname } = new URL(request.url || '/', `http://${request.headers.host}`);
   if (pathname === '/ws') {
-    // Mark this request as handled so Next.js's upgrade handler won't touch it
-    (request as any).__nextjsHandled = true;
     wss.handleUpgrade(request, socket, head, (ws) => {
       wss.emit('connection', ws, request);
     });
   }
-  // For non-/ws paths, let Next.js handle it (e.g. HMR in dev mode)
 });
 
-// Pass httpServer to next() so it knows about our server
+// CRITICAL FIX for Next.js 16.x:
+// Next.js auto-registers its own 'upgrade' handler on the HTTP server
+// (via setupWebSocketHandler in node_modules/next/dist/server/next.js line 335).
+// That handler fires for ALL upgrade requests including /ws, destroying our
+// WebSocket connections (code 1006). Node.js EventEmitter has no stopPropagation.
+//
+// Solution: Monkey-patch the server's listener registration methods so that
+// any FUTURE 'upgrade' listener (registered by Next.js) automatically skips
+// requests to /ws. Our own handler above was already registered and is unaffected.
+const wrapUpgradeListener = (fn: Function): Function => {
+  return (req: any, socket: any, head: any) => {
+    const url = new URL(req.url || '/', `http://${req.headers.host}`);
+    if (url.pathname === '/ws') return; // Already handled by our WS server
+    return fn(req, socket, head);
+  };
+};
+
+for (const method of ['on', 'addListener', 'prependListener'] as const) {
+  const original = (server as any)[method].bind(server);
+  (server as any)[method] = (event: string, listener: Function, ...rest: any[]) => {
+    if (event === 'upgrade') {
+      return original(event, wrapUpgradeListener(listener), ...rest);
+    }
+    return original(event, listener, ...rest);
+  };
+}
+
+// Now it's safe to initialize Next.js — its upgrade handler will be wrapped
 const nextApp = next({ dev, httpServer: server });
 const handle = nextApp.getRequestHandler();
 
@@ -113,7 +135,6 @@ nextApp.prepare().then(() => {
             console.log(`[WS] SYNC_STATE sent for room: ${roomId}`);
           } catch (dbErr) {
             console.error(`[WS] DB error during SYNC for room ${roomId}:`, dbErr);
-            // Fallback: send a fresh in-memory state so the client is not stuck
             const fallbackState = createInitialState(roomId);
             fallbackState.revision = 0;
             activeRooms.set(roomId, fallbackState);
@@ -135,14 +156,12 @@ nextApp.prepare().then(() => {
 
         const state = await getOrCreateRoomState(roomId);
 
-        // Concurrency / Stale check
         if (clientRevision !== undefined && state.revision !== undefined && clientRevision < state.revision) {
           ws.send(JSON.stringify({ type: 'ERROR', code: 'STALE_REVISION', message: 'State is stale, syncing...' }));
           ws.send(JSON.stringify({ type: 'SYNC_STATE', payload: state }));
           return;
         }
 
-        // Process Action
         const newState = gameReducer(state, action as ClientAction, playerId);
 
         const saved = await saveGameState(newState, state.revision || 0, action.type, action);
