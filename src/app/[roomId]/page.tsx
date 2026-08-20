@@ -27,6 +27,7 @@ const TOKENS = [
   { id: '#3b82f6', name: 'Xanh dương', hex: '#3b82f6', label: '🔵 Xanh dương' },
   { id: '#10b981', name: 'Xanh lá', hex: '#10b981', label: '🟢 Xanh lá' },
   { id: '#f59e0b', name: 'Vàng cam', hex: '#f59e0b', label: '🟡 Vàng' },
+  { id: '#a855f7', name: 'Tím mộng mơ', hex: '#a855f7', label: '🟣 Tím' },
 ];
 
 export default function RoomPage() {
@@ -114,7 +115,7 @@ export default function RoomPage() {
               {/* Connected Players List */}
               <div className="space-y-2">
                 <span className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5 mb-2">
-                  <Users size={14} /> Người chơi đã vào ({gameState.players.length}/4)
+                  <Users size={14} /> Người chơi đã vào ({gameState.players.length}/5)
                 </span>
                 {gameState.players.length === 0 && (
                   <p className="text-xs text-slate-500 italic">Chưa có ai vào phòng</p>
@@ -144,7 +145,7 @@ export default function RoomPage() {
             </div>
 
             <div className="text-[11px] text-slate-500 mt-6 pt-4 border-t border-slate-800">
-              💡 Gửi mã hoặc liên kết phòng này cho bạn bè để cùng chơi.
+              💡 Gửi mã hoặc liên kết phòng này cho bạn bè để cùng chơi (Tối đa 5 người).
             </div>
           </div>
           
@@ -163,7 +164,7 @@ export default function RoomPage() {
               >
                 <div>
                   <h2 className="text-2xl font-black text-white">Tham Gia Bàn Cờ</h2>
-                  <p className="text-xs text-slate-400 mt-1">Chọn biệt danh và quân cờ đại diện của bạn</p>
+                  <p className="text-xs text-slate-400 mt-1">Chọn biệt danh và quân cờ đại diện của bạn (2 - 5 người)</p>
                 </div>
                 
                 <div>
@@ -185,7 +186,7 @@ export default function RoomPage() {
                   <label className="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-2">
                     Chọn màu quân cờ
                   </label>
-                  <div className="grid grid-cols-4 gap-3">
+                  <div className="grid grid-cols-5 gap-2">
                     {TOKENS.map(t => {
                       const isTaken = gameState.players.some(p => p.tokenColor === t.hex);
                       const isSelected = tokenColor === t.hex;

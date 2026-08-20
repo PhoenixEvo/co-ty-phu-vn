@@ -14,8 +14,8 @@ export function createInitialState(roomId: string): GameState {
     properties: {},
     events: [],
     config: {
-      startingMoney: 10_000_000, // 10 Triệu VNĐ
-      goSalary: 2_000_000,       // 2 Triệu VNĐ
+      startingMoney: 15_000_000, // 15 Triệu VNĐ (Tương đương $1,500 chuẩn Monopoly)
+      goSalary: 2_000_000,       // 2 Triệu VNĐ (Tương đương $200 chuẩn Monopoly)
     },
     awaitingAction: null,
     lastDrawnCard: null,
@@ -153,6 +153,7 @@ export function gameReducer(state: GameState, action: ClientAction, playerId: st
   switch (action.type) {
     case 'JOIN_GAME': {
       if (draft.status !== 'waiting') return draft;
+      if (draft.players.length >= 5) return draft; // Support up to 5 players
       if (!draft.players.find(p => p.id === playerId)) {
         draft.players.push({
           id: playerId,
@@ -173,7 +174,7 @@ export function gameReducer(state: GameState, action: ClientAction, playerId: st
     }
 
     case 'START_GAME': {
-      if (!isHost || draft.status !== 'waiting' || draft.players.length < 2) return draft;
+      if (!isHost || draft.status !== 'waiting' || draft.players.length < 2 || draft.players.length > 5) return draft;
       draft.status = 'playing';
       draft.turnState = 'AWAITING_ROLL';
       logEvent(draft, 'Trò chơi bắt đầu!');
@@ -615,8 +616,8 @@ export function gameReducer(state: GameState, action: ClientAction, playerId: st
         const amt = card.effect.amount;
         draft.players.forEach(otherP => {
           if (otherP.id !== player.id && !otherP.isBankrupt) {
-            player.money -= amt;
-            otherP.money += amt;
+            otherP.money -= amt;
+            player.money += amt;
           }
         });
         if (player.money < 0) {
@@ -727,8 +728,8 @@ export function gameReducer(state: GameState, action: ClientAction, playerId: st
       if (card.effect.type === 'move_to' && card.effect.targetPosition !== undefined) {
         const targetPos = card.effect.targetPosition;
         
-        // Pass GO bonus check
-        if (targetPos < player.position && targetPos !== 0) {
+        // Pass or land on GO bonus check (Fix bug: receiving 2.000.000 ₫ when returning to Start position 0)
+        if (targetPos === 0 || targetPos < player.position) {
           player.money += draft.config.goSalary;
           logEvent(draft, `${player.nickname} đi qua Bắt Đầu và nhận ${formatMoney(draft.config.goSalary)}.`, 'pass_go', playerId, draft.config.goSalary);
           setCenterBanner(draft, `💰 ${player.nickname} NHẬN LƯƠNG ${formatMoney(draft.config.goSalary)}`, 'pass_go');

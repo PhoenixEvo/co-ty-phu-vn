@@ -27,10 +27,10 @@ export default function RulesModal({ onClose }: RulesModalProps) {
           <div className="space-y-1.5">
             <h4 className="font-black text-slate-900 flex items-center gap-2">
               <span className="w-5 h-5 rounded-full bg-red-600 text-white flex items-center justify-center text-xs">1</span>
-              Mục tiêu trò chơi
+              Mục tiêu trò chơi & Người chơi
             </h4>
             <p className="text-xs pl-7">
-              Trở thành người chơi giàu nhất bằng cách mua đất, xây dựng bất động sản và thu tiền thuê từ đối thủ cho đến khi những người chơi khác phá sản. Tiền khởi đầu: <strong>10.000.000 ₫</strong>.
+              Hỗ trợ <strong>2 đến 5 người chơi</strong> cùng lúc. Mục tiêu là trở thành người chơi giàu nhất bằng cách mua đất, xây dựng bất động sản và thu tiền thuê từ đối thủ cho đến khi những người chơi khác phá sản. Tiền khởi đầu: <strong>15.000.000 ₫</strong> (tương đương chuẩn $1,500 Monopoly).
             </p>
           </div>
 
