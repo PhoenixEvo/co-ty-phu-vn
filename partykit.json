@@ -1,0 +1,6 @@
+{
+  "name": "co-ty-phu-vn",
+  "main": "party/index.ts",
+  "serve": "public",
+  "port": 1999
+}
