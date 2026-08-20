@@ -27,7 +27,7 @@ nextApp.prepare().then(() => {
   });
 
   // Serve Next.js frontend for all other routes
-  app.all('*', (req, res) => {
+  app.use((req, res) => {
     return handle(req, res);
   });
 
