@@ -132,6 +132,7 @@ export interface GameState {
 export type ClientAction =
   | { type: 'JOIN_GAME'; payload: { nickname: string; tokenColor: string } }
   | { type: 'START_GAME' }
+  | { type: 'RESTART_GAME' }
   | { type: 'ROLL_DICE' }
   | { type: 'PAY_JAIL_FINE' }
   | { type: 'BUY_PROPERTY' }

@@ -358,7 +358,7 @@ export default function RoomPage() {
       )}
 
       {/* 2. Game Over Modal */}
-      <GameOverModal state={gameState} />
+      <GameOverModal state={gameState} dispatch={dispatch} playerId={playerId} />
 
       {/* 3. Invite Friends Modal */}
       {isInviteOpen && (

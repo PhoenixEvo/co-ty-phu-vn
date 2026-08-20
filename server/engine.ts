@@ -182,6 +182,34 @@ export function gameReducer(state: GameState, action: ClientAction, playerId: st
       return draft;
     }
 
+    case 'RESTART_GAME': {
+      if (draft.status !== 'finished') return draft;
+      
+      // Reset all connected players
+      draft.players.forEach(p => {
+        p.money = draft.config.startingMoney;
+        p.position = 0;
+        p.isBankrupt = false;
+        p.inJail = false;
+        p.jailTurns = 0;
+        p.doublesCount = 0;
+      });
+
+      draft.status = 'waiting';
+      draft.turnState = 'WAITING_FOR_PLAYERS';
+      draft.currentPlayerIndex = 0;
+      draft.properties = {};
+      draft.events = [];
+      draft.winnerId = undefined;
+      draft.awaitingAction = null;
+      draft.lastDrawnCard = null;
+      draft.lastCenterBanner = null;
+
+      logEvent(draft, '🔄 Phòng chơi đã được làm mới toàn bộ! Sẵn sàng cho trận đấu mới.');
+      setCenterBanner(draft, 'PHÒNG CHƠI ĐÃ ĐƯỢC TẠO LẠI!', 'pass_go');
+      return draft;
+    }
+
     case 'PAY_JAIL_FINE': {
       if (draft.status !== 'playing' || !isCurrentTurn || !player || !player.inJail) return draft;
       const fine = 500_000;
@@ -279,7 +307,7 @@ export function gameReducer(state: GameState, action: ClientAction, playerId: st
                   setCenterBanner(draft, `💸 ${player.nickname} TRẢ ${formatMoney(rent)} TIỀN THUÊ`, 'rent');
                   nextPlayer(draft);
                 } else {
-                  // INSUFFICIENT CASH: DO NOT BANKRUPT IMMEDIATELY! Enter insolvency debt settlement state
+                  // INSUFFICIENT CASH: Enter insolvency debt settlement state
                   draft.turnState = 'AWAITING_ACTION';
                   draft.awaitingAction = {
                     type: 'pay_rent',

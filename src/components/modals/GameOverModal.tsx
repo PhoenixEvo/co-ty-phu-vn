@@ -5,14 +5,17 @@ import { Trophy, Crown, RotateCcw, Home, Bus, DollarSign } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { BOARD_SPACES } from '@/game/boardConfig';
 import { formatMoney } from '@/utils/format';
+import { sounds } from '@/utils/sound';
 
 interface GameOverModalProps {
   state: GameState;
+  dispatch?: any;
+  playerId?: string;
   onRestart?: () => void;
   onLeave?: () => void;
 }
 
-export default function GameOverModal({ state, onRestart, onLeave }: GameOverModalProps) {
+export default function GameOverModal({ state, dispatch, playerId }: GameOverModalProps) {
   if (state.turnState !== 'GAME_OVER' || !state.winnerId) return null;
 
   const winner = state.players.find(p => p.id === state.winnerId);
@@ -21,6 +24,13 @@ export default function GameOverModal({ state, onRestart, onLeave }: GameOverMod
   const ownedSpaces = BOARD_SPACES.filter(s => state.properties[s.id]?.ownerId === winner.id);
   const propertiesCount = ownedSpaces.filter(s => s.type === 'property').length;
   const transportsCount = ownedSpaces.filter(s => s.type === 'transport').length;
+
+  const handleRestart = () => {
+    if (dispatch) {
+      sounds.playBuyProperty();
+      dispatch({ type: 'RESTART_GAME' });
+    }
+  };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-md animate-in fade-in duration-300">
@@ -69,15 +79,26 @@ export default function GameOverModal({ state, onRestart, onLeave }: GameOverMod
           </div>
         </div>
 
-        {/* Action Button */}
-        <button
-          onClick={() => {
-            if (typeof window !== 'undefined') window.location.href = '/';
-          }}
-          className="w-full py-3.5 bg-linear-to-r from-amber-500 to-yellow-400 hover:from-amber-400 hover:to-yellow-300 text-slate-950 font-black text-base rounded-xl transition shadow-lg active:scale-95 cursor-pointer"
-        >
-          VỀ TRANG CHỦ & TẠO PHÒNG MỚI
-        </button>
+        {/* Action Buttons */}
+        <div className="space-y-2.5">
+          <button
+            onClick={handleRestart}
+            className="w-full py-3.5 bg-linear-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-slate-950 font-black text-base rounded-xl transition shadow-lg active:scale-95 cursor-pointer flex items-center justify-center gap-2"
+          >
+            <RotateCcw size={18} />
+            <span>TẠO LẠI VÁN MỚI TRONG PHÒNG 🔄</span>
+          </button>
+
+          <button
+            onClick={() => {
+              if (typeof window !== 'undefined') window.location.href = '/';
+            }}
+            className="w-full py-3 bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-sm rounded-xl transition border border-slate-700 active:scale-95 cursor-pointer flex items-center justify-center gap-2"
+          >
+            <Home size={16} />
+            <span>VỀ TRANG CHỦ TẠO PHÒNG MÃ MỚI</span>
+          </button>
+        </div>
       </motion.div>
     </div>
   );
