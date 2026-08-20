@@ -20,6 +20,7 @@ interface GameBoardProps {
   visualPositions?: Record<string, number>;
   activeDestination?: number | null;
   steppingPlayerId?: string | null;
+  isFocusMode?: boolean;
 }
 
 export default function GameBoard({ 
@@ -28,7 +29,8 @@ export default function GameBoard({
   dispatch,
   visualPositions = {},
   activeDestination = null,
-  steppingPlayerId = null
+  steppingPlayerId = null,
+  isFocusMode = false
 }: GameBoardProps) {
   const [selectedSpace, setSelectedSpace] = useState<BoardSpace | null>(null);
 
@@ -54,9 +56,13 @@ export default function GameBoard({
 
   return (
     <>
-      {/* Physical Board Container with Subtle 2.5D Frame */}
+      {/* Responsive Landscape 4:3 Physical Board Container */}
       <div 
-        className="aspect-square relative bg-[#f7f2e7] p-1.5 md:p-2.5 lg:p-3 rounded-2xl shadow-2xl border-4 border-amber-950/90 select-none flex items-center justify-center shrink-0 w-[min(100%,calc(100vh-4rem))] max-w-[940px]"
+        className={`aspect-square md:aspect-[4/3] relative bg-[#f7f2e7] p-1.5 md:p-2.5 lg:p-3 rounded-2xl shadow-2xl border-4 border-amber-950/90 select-none flex items-center justify-center shrink-0 w-full max-h-[calc(100vh-4.25rem)] ${
+          isFocusMode 
+            ? 'max-w-[min(calc((100vh-4.25rem)*1.333),calc(100vw-2rem))] lg:max-w-[1200px]'
+            : 'max-w-[min(calc((100vh-4.25rem)*1.333),calc(100vw-340px-1.5rem))] lg:max-w-[1080px]'
+        }`}
         style={{
           boxShadow: '0 25px 60px -10px rgba(0,0,0,0.75), inset 0 2px 6px rgba(255,255,255,0.4), inset 0 -4px 8px rgba(0,0,0,0.3)'
         }}
@@ -64,16 +70,16 @@ export default function GameBoard({
         <div 
           className="w-full h-full border-2 border-slate-900 grid rounded-lg overflow-hidden bg-[#faf7f0]"
           style={{
-            gridTemplateColumns: '13.5% repeat(9, 1fr) 13.5%',
+            gridTemplateColumns: '11% repeat(9, 1fr) 11%',
             gridTemplateRows: '13.5% repeat(9, 1fr) 13.5%',
           }}
         >
-          {/* ================= Center Area: Layered Vietnamese Landscape Artwork ================= */}
+          {/* ================= Center Area: Panoramic 4:3 Vietnamese Landscape Artwork ================= */}
           <div className="relative overflow-hidden" style={{ gridArea: '2 / 2 / 11 / 11' }}>
             <VietnamCenterArtwork lastCenterBanner={state.lastCenterBanner} />
           </div>
 
-          {/* ================= 40 Board Spaces ================= */}
+          {/* ================= 40 Board Spaces Around Landscape Perimeter ================= */}
           {BOARD_SPACES.map(space => {
             const playersOnSpace = state.players.filter(p => {
               if (p.isBankrupt) return false;

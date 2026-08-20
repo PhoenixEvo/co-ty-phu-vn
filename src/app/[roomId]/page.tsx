@@ -289,6 +289,7 @@ export default function RoomPage() {
             visualPositions={visualPositions}
             activeDestination={activeDestination}
             steppingPlayerId={steppingPlayerId}
+            isFocusMode={isFocusMode}
           />
         </VietnameseGameTable>
         
