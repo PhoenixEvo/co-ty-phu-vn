@@ -139,8 +139,8 @@ wss.on('close', () => {
 
 const PORT = process.env.PORT || 10000;
 initDb().then(() => {
-  server.listen(PORT, () => {
-    console.log(`Node.js WebSocket Game Server listening on port ${PORT}`);
+  server.listen(Number(PORT), '0.0.0.0', () => {
+    console.log(`Node.js WebSocket Game Server listening on port ${PORT} (0.0.0.0)`);
   });
 }).catch(err => {
   console.error('Failed to initialize database', err);
