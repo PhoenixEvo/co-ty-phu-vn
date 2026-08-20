@@ -58,10 +58,10 @@ export default function GameBoard({
     <>
       {/* Responsive Landscape 4:3 Physical Board Container */}
       <div 
-        className={`aspect-square md:aspect-[4/3] relative bg-[#f7f2e7] p-1.5 md:p-2.5 lg:p-3 rounded-2xl shadow-2xl border-4 border-amber-950/90 select-none flex items-center justify-center shrink-0 w-full max-h-[calc(100vh-4.25rem)] ${
+        className={`aspect-square md:aspect-[4/3] relative bg-[#f7f2e7] p-1 md:p-2 lg:p-2.5 rounded-2xl shadow-2xl border-3 md:border-4 border-amber-950/90 select-none flex items-center justify-center shrink-0 w-full max-h-[calc(100vh-4.25rem)] ${
           isFocusMode 
             ? 'max-w-[min(calc((100vh-4.25rem)*1.333),calc(100vw-2rem))] lg:max-w-[1200px]'
-            : 'max-w-[min(calc((100vh-4.25rem)*1.333),calc(100vw-340px-1.5rem))] lg:max-w-[1080px]'
+            : 'max-w-[min(calc((100vh-4.25rem)*1.333),calc(100vw-340px-1.5rem))] lg:max-w-[1100px]'
         }`}
         style={{
           boxShadow: '0 25px 60px -10px rgba(0,0,0,0.75), inset 0 2px 6px rgba(255,255,255,0.4), inset 0 -4px 8px rgba(0,0,0,0.3)'
@@ -70,8 +70,8 @@ export default function GameBoard({
         <div 
           className="w-full h-full border-2 border-slate-900 grid rounded-lg overflow-hidden bg-[#faf7f0]"
           style={{
-            gridTemplateColumns: '11% repeat(9, 1fr) 11%',
-            gridTemplateRows: '13.5% repeat(9, 1fr) 13.5%',
+            gridTemplateColumns: '11.5% repeat(9, 1fr) 11.5%',
+            gridTemplateRows: '12.5% repeat(9, 1fr) 12.5%',
           }}
         >
           {/* ================= Center Area: Panoramic 4:3 Vietnamese Landscape Artwork ================= */}
@@ -142,11 +142,11 @@ export default function GameBoard({
                   />
                 )}
 
-                {/* Multi-Player 3D Pawn Tokens Overlay (High z-index, no text collision) */}
-                <div className="absolute inset-0 p-1 z-40 pointer-events-none flex items-center justify-center">
+                {/* Multi-Player 3D Pawn Tokens Overlay (High z-index, cleanly spaced) */}
+                <div className="absolute inset-0 p-0.5 z-40 pointer-events-none flex items-center justify-center">
                   <div className={`w-full h-full flex items-center justify-center ${
                     playersOnSpace.length === 1 ? '' :
-                    playersOnSpace.length === 2 ? 'gap-1' :
+                    playersOnSpace.length === 2 ? 'gap-0.5' :
                     'grid grid-cols-2 gap-0.5 items-center justify-items-center'
                   }`}>
                     {playersOnSpace.map(p => (

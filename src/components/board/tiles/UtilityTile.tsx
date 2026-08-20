@@ -16,47 +16,31 @@ export default function UtilityTile({ space, edge, owner }: UtilityTileProps) {
 
   if (edge === 'top') {
     return (
-      <div className="w-full h-full flex flex-col justify-between items-center p-1 bg-white relative text-center select-none">
-        <div className="font-mono font-black text-[8.5px] md:text-[9.5px] text-slate-800 bg-slate-100 px-1.5 py-0.2 rounded border border-slate-200 shadow-2xs mb-0.5">
+      <div className="w-full h-full flex flex-col justify-between items-center px-0.5 py-0.5 bg-white relative text-center select-none overflow-hidden">
+        <div className="font-mono font-black text-[7.5px] md:text-[8.5px] lg:text-[9px] text-slate-800 bg-slate-100 px-1 py-0.1 rounded border border-slate-200 shadow-2xs shrink-0 leading-tight">
           ${space.price}
         </div>
-        <div className="flex flex-col items-center">
-          <span className="text-[6.5px] font-bold text-slate-500 uppercase tracking-tighter">CÔNG TY</span>
-          <span className="text-[8.5px] md:text-[9.5px] font-extrabold text-slate-900 uppercase leading-tight">{utilityName}</span>
+        <div className="flex flex-col items-center leading-none px-0.5 w-full">
+          <span className="text-[6px] font-bold text-slate-500 uppercase tracking-tighter">CÔNG TY</span>
+          <span className="text-[7.5px] md:text-[8.5px] lg:text-[9px] font-extrabold text-slate-900 uppercase leading-tight truncate w-full">{utilityName}</span>
         </div>
-        <span className="text-base leading-none mt-auto">{icon}</span>
+        <span className="text-sm md:text-base leading-none my-auto">{icon}</span>
       </div>
     );
   }
 
-  if (edge === 'right') {
-    return (
-      <div className="w-full h-full flex flex-row justify-between items-center p-1 bg-white relative select-none">
-        <div className="w-[20%] flex items-center justify-center text-base">
-          {icon}
-        </div>
-        <div className="flex-1 flex flex-col justify-between items-center h-full text-center min-w-0">
-          <div className="flex flex-col items-center mt-0.5">
-            <span className="text-[6.5px] font-bold text-slate-500 uppercase tracking-tighter">CÔNG TY</span>
-            <span className="text-[8px] md:text-[9px] font-extrabold text-slate-900 uppercase leading-tight">{utilityName}</span>
-          </div>
-          <div className="font-mono font-black text-[8px] md:text-[9px] text-slate-800 bg-slate-100 px-1.5 py-0.2 rounded border border-slate-200 shadow-2xs mt-auto">
-            ${space.price}
-          </div>
-        </div>
-      </div>
-    );
-  }
-
+  // Right Edge
   return (
-    <div className="w-full h-full flex flex-col justify-between items-center p-1 bg-white relative text-center select-none">
-      <span className="text-base leading-none">{icon}</span>
-      <div className="flex flex-col items-center">
-        <span className="text-[6.5px] font-bold text-slate-500 uppercase tracking-tighter">CÔNG TY</span>
-        <span className="text-[8.5px] md:text-[9.5px] font-extrabold text-slate-900 uppercase leading-tight">{utilityName}</span>
-      </div>
-      <div className="font-mono font-black text-[8.5px] md:text-[9.5px] text-slate-800 bg-slate-100 px-1.5 py-0.2 rounded border border-slate-200 shadow-2xs mt-auto">
-        ${space.price}
+    <div className="w-full h-full flex flex-row justify-between items-center px-0.5 py-0.5 bg-white relative select-none overflow-hidden">
+      <div className="flex-1 flex flex-col justify-between items-center h-full text-center min-w-0 overflow-hidden">
+        <div className="flex flex-col items-center leading-none px-0.5 w-full">
+          <span className="text-[6px] font-bold text-slate-500 uppercase tracking-tighter">CÔNG TY</span>
+          <span className="text-[7px] md:text-[8px] lg:text-[9px] font-extrabold text-slate-900 uppercase leading-tight truncate w-full">{utilityName}</span>
+        </div>
+        <span className="text-sm leading-none my-auto">{icon}</span>
+        <div className="font-mono font-black text-[7px] md:text-[8px] lg:text-[9px] text-slate-800 bg-slate-100 px-1 py-0.1 rounded border border-slate-200 shadow-2xs shrink-0 leading-tight">
+          ${space.price}
+        </div>
       </div>
     </div>
   );

@@ -14,14 +14,14 @@ export default function TaxTile({ space, edge }: TaxTileProps) {
 
   if (edge === 'bottom') {
     return (
-      <div className="w-full h-full flex flex-col justify-between items-center p-1 bg-white relative text-center select-none">
-        <span className="text-sm mt-0.5">🧾</span>
-        <div className="flex flex-col items-center">
-          <span className="text-[7.5px] md:text-[8.5px] font-black text-slate-900 uppercase leading-tight">
+      <div className="w-full h-full flex flex-col justify-between items-center px-0.5 py-0.5 bg-white relative text-center select-none overflow-hidden">
+        <span className="text-xs md:text-sm mt-0.5">🧾</span>
+        <div className="flex flex-col items-center leading-tight px-0.5 w-full">
+          <span className="text-[7px] md:text-[8px] lg:text-[8.5px] font-black text-slate-900 uppercase leading-tight truncate w-full">
             {isSpecialTax ? 'THUẾ ĐẶC BIỆT' : 'THUẾ THU NHẬP'}
           </span>
         </div>
-        <div className="font-mono font-black text-[8px] md:text-[9px] text-red-600 bg-red-50 px-1 py-0.2 rounded border border-red-200 mt-auto">
+        <div className="font-mono font-black text-[7.5px] md:text-[8.5px] lg:text-[9px] text-red-600 bg-red-50 px-1 py-0.1 rounded border border-red-200 shrink-0 leading-tight">
           - ${space.taxAmount || 100}
         </div>
       </div>
@@ -30,29 +30,27 @@ export default function TaxTile({ space, edge }: TaxTileProps) {
 
   if (edge === 'left') {
     return (
-      <div className="w-full h-full flex flex-row justify-between items-center p-1 bg-white relative select-none">
-        <div className="flex-1 flex flex-col justify-between items-center h-full text-center min-w-0">
-          <span className="text-[7.5px] md:text-[8.5px] font-black text-slate-900 uppercase leading-tight mt-0.5">
+      <div className="w-full h-full flex flex-row justify-between items-center px-0.5 py-0.5 bg-white relative select-none overflow-hidden">
+        <div className="flex-1 flex flex-col justify-between items-center h-full text-center min-w-0 overflow-hidden">
+          <span className="text-[6.5px] md:text-[7.5px] font-black text-slate-900 uppercase leading-tight truncate w-full px-0.5">
             {isIncomeTax ? 'THUẾ THU NHẬP' : 'THUẾ ĐẶC BIỆT'}
           </span>
-          <div className="font-mono font-black text-[8px] md:text-[8.5px] text-red-600 bg-red-50 px-1 py-0.2 rounded border border-red-200 mt-auto">
+          <span className="text-xs">🧾</span>
+          <div className="font-mono font-black text-[7px] md:text-[8px] text-red-600 bg-red-50 px-1 py-0.1 rounded border border-red-200 shrink-0 leading-tight">
             - ${space.taxAmount || 200}
           </div>
-        </div>
-        <div className="w-[20%] flex items-center justify-center text-sm">
-          🧾
         </div>
       </div>
     );
   }
 
   return (
-    <div className="w-full h-full flex flex-col justify-between items-center p-1 bg-white relative text-center select-none">
-      <span className="text-sm mt-0.5">🧾</span>
-      <span className="text-[7.5px] md:text-[8.5px] font-black text-slate-900 uppercase leading-tight">
+    <div className="w-full h-full flex flex-col justify-between items-center px-0.5 py-0.5 bg-white relative text-center select-none overflow-hidden">
+      <span className="text-xs md:text-sm mt-0.5">🧾</span>
+      <span className="text-[7px] md:text-[8px] font-black text-slate-900 uppercase leading-tight truncate w-full px-0.5">
         {space.name}
       </span>
-      <div className="font-mono font-black text-[8px] md:text-[9px] text-red-600 bg-red-50 px-1 py-0.2 rounded border border-red-200 mt-auto">
+      <div className="font-mono font-black text-[7.5px] md:text-[8.5px] text-red-600 bg-red-50 px-1 py-0.1 rounded border border-red-200 shrink-0 leading-tight">
         - ${space.taxAmount || 100}
       </div>
     </div>

@@ -26,23 +26,15 @@ export default function PropertyTile({ space, edge, owner }: PropertyTileProps) 
   const colorClass = COLOR_MAP[space.colorGroup] || 'bg-slate-400';
   const artwork = getLocationArtwork(space.id);
 
-  // Dynamic font sizing to ensure maximum readability on the enlarged board
-  const getNameFontSize = (name: string) => {
-    const len = name.length;
-    if (len <= 7) return 'text-[9.5px] md:text-[11px] lg:text-[12.5px] font-black tracking-tight';
-    if (len <= 13) return 'text-[8px] md:text-[9.5px] lg:text-[10.5px] font-extrabold leading-[1.12]';
-    return 'text-[7.5px] md:text-[8.5px] lg:text-[9.5px] font-bold leading-[1.08]';
-  };
-
-  // 1. Bottom Edge (Spaces 31 - 39: Color strip at Top, Photo in middle, Name, Price at Bottom)
+  // 1. Bottom Edge (Spaces 31 - 39: Color strip at Top, Name, Photo, Price at Bottom)
   if (edge === 'bottom') {
     return (
-      <div className="w-full h-full flex flex-col justify-between bg-white relative select-none group">
+      <div className="w-full h-full flex flex-col justify-between bg-white relative select-none group overflow-hidden">
         {/* Color Strip (Top / Inner Edge) */}
-        <div className={`h-[18%] w-full ${colorClass} shrink-0 flex items-center justify-center relative shadow-2xs`}>
+        <div className={`h-[15%] w-full ${colorClass} shrink-0 flex items-center justify-center relative shadow-2xs`}>
           {owner && (
             <div 
-              className="w-3 h-3 md:w-3.5 md:h-3.5 rounded-full border-2 border-white shadow-xs"
+              className="w-2.5 h-2.5 md:w-3 md:h-3 rounded-full border border-white shadow-xs"
               style={{ backgroundColor: owner.tokenColor }}
               title={`Chủ: ${owner.nickname}`}
             />
@@ -50,22 +42,22 @@ export default function PropertyTile({ space, edge, owner }: PropertyTileProps) 
         </div>
 
         {/* White Content Region */}
-        <div className="flex-1 flex flex-col justify-between items-center px-1 py-0.5 text-center min-w-0">
-          <span className={`w-full text-slate-900 uppercase break-words hyphens-auto mt-0.5 ${getNameFontSize(space.name)}`}>
+        <div className="flex-1 flex flex-col justify-between items-center px-0.5 py-0.5 text-center min-w-0 overflow-hidden">
+          <span className="w-full text-slate-900 uppercase font-black text-[7.5px] md:text-[8.5px] lg:text-[9.5px] leading-tight truncate px-0.5">
             {space.name}
           </span>
 
-          {/* Dedicated Real Location Photograph Thumbnail */}
-          <div className="w-full h-8 md:h-10 lg:h-12 my-auto rounded-xs overflow-hidden shrink-0 shadow-2xs">
+          {/* Photo Thumbnail */}
+          <div className="w-full flex-1 min-h-0 max-h-[34px] md:max-h-[44px] my-auto rounded-xs overflow-hidden shrink-0 shadow-2xs">
             {artwork?.renderThumbnail ? (
-              artwork.renderThumbnail('w-full h-full')
+              artwork.renderThumbnail('w-full h-full object-cover')
             ) : space.landmarkIcon ? (
-              <span className="text-sm leading-none">{space.landmarkIcon}</span>
+              <span className="text-xs leading-none">{space.landmarkIcon}</span>
             ) : null}
           </div>
 
           {/* Price Badge */}
-          <div className="font-mono font-black text-[8.5px] md:text-[10px] lg:text-[11px] text-slate-800 bg-slate-100 px-1.5 py-0.2 rounded border border-slate-200 shadow-2xs mt-auto">
+          <div className="font-mono font-black text-[7.5px] md:text-[8.5px] lg:text-[9.5px] text-slate-800 bg-slate-100 px-1 py-0.1 rounded border border-slate-200 shadow-2xs shrink-0 leading-tight">
             ${space.price}
           </div>
         </div>
@@ -73,36 +65,36 @@ export default function PropertyTile({ space, edge, owner }: PropertyTileProps) 
     );
   }
 
-  // 2. Top Edge (Spaces 11 - 19: Price at Top / Outer Edge, Name, Photo in middle, Color strip at Bottom / Inner Edge)
+  // 2. Top Edge (Spaces 11 - 19: Price at Top, Photo, Name, Color strip at Bottom)
   if (edge === 'top') {
     return (
-      <div className="w-full h-full flex flex-col justify-between bg-white relative select-none group">
-        {/* White Content Region (Top half) */}
-        <div className="flex-1 flex flex-col justify-between items-center px-1 py-0.5 text-center min-w-0">
-          {/* Price Badge at outer top */}
-          <div className="font-mono font-black text-[8.5px] md:text-[10px] lg:text-[11px] text-slate-800 bg-slate-100 px-1.5 py-0.2 rounded border border-slate-200 shadow-2xs mb-0.5">
+      <div className="w-full h-full flex flex-col justify-between bg-white relative select-none group overflow-hidden">
+        {/* White Content Region */}
+        <div className="flex-1 flex flex-col justify-between items-center px-0.5 py-0.5 text-center min-w-0 overflow-hidden">
+          {/* Price Badge */}
+          <div className="font-mono font-black text-[7.5px] md:text-[8.5px] lg:text-[9.5px] text-slate-800 bg-slate-100 px-1 py-0.1 rounded border border-slate-200 shadow-2xs shrink-0 leading-tight">
             ${space.price}
           </div>
 
-          {/* Dedicated Real Location Photograph Thumbnail */}
-          <div className="w-full h-8 md:h-10 lg:h-12 my-auto rounded-xs overflow-hidden shrink-0 shadow-2xs">
+          {/* Photo Thumbnail */}
+          <div className="w-full flex-1 min-h-0 max-h-[34px] md:max-h-[44px] my-auto rounded-xs overflow-hidden shrink-0 shadow-2xs">
             {artwork?.renderThumbnail ? (
-              artwork.renderThumbnail('w-full h-full')
+              artwork.renderThumbnail('w-full h-full object-cover')
             ) : space.landmarkIcon ? (
-              <span className="text-sm leading-none">{space.landmarkIcon}</span>
+              <span className="text-xs leading-none">{space.landmarkIcon}</span>
             ) : null}
           </div>
 
-          <span className={`w-full text-slate-900 uppercase break-words hyphens-auto mb-0.5 ${getNameFontSize(space.name)}`}>
+          <span className="w-full text-slate-900 uppercase font-black text-[7.5px] md:text-[8.5px] lg:text-[9.5px] leading-tight truncate px-0.5">
             {space.name}
           </span>
         </div>
 
         {/* Color Strip (Bottom / Inner Edge) */}
-        <div className={`h-[18%] w-full ${colorClass} shrink-0 flex items-center justify-center relative shadow-2xs`}>
+        <div className={`h-[15%] w-full ${colorClass} shrink-0 flex items-center justify-center relative shadow-2xs`}>
           {owner && (
             <div 
-              className="w-3 h-3 md:w-3.5 md:h-3.5 rounded-full border-2 border-white shadow-xs"
+              className="w-2.5 h-2.5 md:w-3 md:h-3 rounded-full border border-white shadow-xs"
               style={{ backgroundColor: owner.tokenColor }}
               title={`Chủ: ${owner.nickname}`}
             />
@@ -112,36 +104,36 @@ export default function PropertyTile({ space, edge, owner }: PropertyTileProps) 
     );
   }
 
-  // 3. Left Edge (Spaces 1 - 9: Width > Height. Color strip at Right / Inner Edge, Content on Left)
+  // 3. Left Edge (Spaces 1 - 9: Color strip at Right / Inner Edge)
   if (edge === 'left') {
     return (
-      <div className="w-full h-full flex flex-row justify-between bg-white relative select-none group">
-        {/* White Content Region (Left / Outer side) */}
-        <div className="flex-1 h-full flex flex-col justify-between items-center px-1 py-0.5 text-center min-w-0">
-          <span className={`w-full text-slate-900 uppercase break-words hyphens-auto ${getNameFontSize(space.name)}`}>
+      <div className="w-full h-full flex flex-row justify-between bg-white relative select-none group overflow-hidden">
+        {/* White Content Region */}
+        <div className="flex-1 h-full flex flex-col justify-between items-center px-0.5 py-0.5 text-center min-w-0 overflow-hidden">
+          <span className="w-full text-slate-900 uppercase font-black text-[7px] md:text-[8px] lg:text-[9px] leading-tight truncate px-0.5">
             {space.name}
           </span>
 
-          {/* Dedicated Real Location Photograph Thumbnail */}
-          <div className="w-14 md:w-18 lg:w-22 h-6 md:h-7 lg:h-8 my-auto rounded-xs overflow-hidden shrink-0 shadow-2xs">
+          {/* Photo Thumbnail */}
+          <div className="w-[85%] flex-1 min-h-0 max-h-[26px] md:max-h-[32px] my-auto rounded-xs overflow-hidden shrink-0 shadow-2xs">
             {artwork?.renderThumbnail ? (
-              artwork.renderThumbnail('w-full h-full')
+              artwork.renderThumbnail('w-full h-full object-cover')
             ) : space.landmarkIcon ? (
-              <span className="text-sm leading-none">{space.landmarkIcon}</span>
+              <span className="text-xs leading-none">{space.landmarkIcon}</span>
             ) : null}
           </div>
 
           {/* Price Badge */}
-          <div className="font-mono font-black text-[8px] md:text-[9.5px] lg:text-[10.5px] text-slate-800 bg-slate-100 px-1.5 py-0.2 rounded border border-slate-200 shadow-2xs mt-auto">
+          <div className="font-mono font-black text-[7px] md:text-[8px] lg:text-[9px] text-slate-800 bg-slate-100 px-1 py-0.1 rounded border border-slate-200 shadow-2xs shrink-0 leading-tight">
             ${space.price}
           </div>
         </div>
 
         {/* Color Strip (Right / Inner Edge towards center) */}
-        <div className={`w-[18%] h-full ${colorClass} shrink-0 flex items-center justify-center relative shadow-2xs`}>
+        <div className={`w-[14%] h-full ${colorClass} shrink-0 flex items-center justify-center relative shadow-2xs`}>
           {owner && (
             <div 
-              className="w-3 h-3 md:w-3.5 md:h-3.5 rounded-full border-2 border-white shadow-xs"
+              className="w-2.5 h-2.5 md:w-3 md:h-3 rounded-full border border-white shadow-xs"
               style={{ backgroundColor: owner.tokenColor }}
               title={`Chủ: ${owner.nickname}`}
             />
@@ -151,37 +143,37 @@ export default function PropertyTile({ space, edge, owner }: PropertyTileProps) 
     );
   }
 
-  // 4. Right Edge (Spaces 21 - 29: Width > Height. Color strip at Left / Inner Edge, Content on Right)
+  // 4. Right Edge (Spaces 21 - 29: Color strip at Left / Inner Edge)
   return (
-    <div className="w-full h-full flex flex-row justify-between bg-white relative select-none group">
+    <div className="w-full h-full flex flex-row justify-between bg-white relative select-none group overflow-hidden">
       {/* Color Strip (Left / Inner Edge towards center) */}
-      <div className={`w-[18%] h-full ${colorClass} shrink-0 flex items-center justify-center relative shadow-2xs`}>
+      <div className={`w-[14%] h-full ${colorClass} shrink-0 flex items-center justify-center relative shadow-2xs`}>
         {owner && (
           <div 
-            className="w-3 h-3 md:w-3.5 md:h-3.5 rounded-full border-2 border-white shadow-xs"
+            className="w-2.5 h-2.5 md:w-3 md:h-3 rounded-full border border-white shadow-xs"
             style={{ backgroundColor: owner.tokenColor }}
             title={`Chủ: ${owner.nickname}`}
           />
         )}
       </div>
 
-      {/* White Content Region (Right / Outer side) */}
-      <div className="flex-1 h-full flex flex-col justify-between items-center px-1 py-0.5 text-center min-w-0">
-        <span className={`w-full text-slate-900 uppercase break-words hyphens-auto ${getNameFontSize(space.name)}`}>
+      {/* White Content Region */}
+      <div className="flex-1 h-full flex flex-col justify-between items-center px-0.5 py-0.5 text-center min-w-0 overflow-hidden">
+        <span className="w-full text-slate-900 uppercase font-black text-[7px] md:text-[8px] lg:text-[9px] leading-tight truncate px-0.5">
           {space.name}
         </span>
 
-        {/* Dedicated Real Location Photograph Thumbnail */}
-        <div className="w-14 md:w-18 lg:w-22 h-6 md:h-7 lg:h-8 my-auto rounded-xs overflow-hidden shrink-0 shadow-2xs">
+        {/* Photo Thumbnail */}
+        <div className="w-[85%] flex-1 min-h-0 max-h-[26px] md:max-h-[32px] my-auto rounded-xs overflow-hidden shrink-0 shadow-2xs">
           {artwork?.renderThumbnail ? (
-            artwork.renderThumbnail('w-full h-full')
+            artwork.renderThumbnail('w-full h-full object-cover')
           ) : space.landmarkIcon ? (
-            <span className="text-sm leading-none">{space.landmarkIcon}</span>
+            <span className="text-xs leading-none">{space.landmarkIcon}</span>
           ) : null}
         </div>
 
         {/* Price Badge */}
-        <div className="font-mono font-black text-[8px] md:text-[9.5px] lg:text-[10.5px] text-slate-800 bg-slate-100 px-1.5 py-0.2 rounded border border-slate-200 shadow-2xs mt-auto">
+        <div className="font-mono font-black text-[7px] md:text-[8px] lg:text-[9px] text-slate-800 bg-slate-100 px-1 py-0.1 rounded border border-slate-200 shadow-2xs shrink-0 leading-tight">
           ${space.price}
         </div>
       </div>

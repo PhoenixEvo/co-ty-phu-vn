@@ -13,23 +13,22 @@ interface VietnamCenterArtworkProps {
 
 export default function VietnamCenterArtwork({ lastCenterBanner }: VietnamCenterArtworkProps) {
   return (
-    <div className="w-full h-full bg-linear-to-b from-[#edf6ef] via-[#f5fbf7] to-[#e6f4eb] flex flex-col items-center justify-center relative overflow-hidden p-3 md:p-6 border border-slate-300/80 shadow-inner select-none">
+    <div className="w-full h-full bg-linear-to-b from-[#e8f5ec] via-[#f4faf6] to-[#e1f0e6] flex flex-col items-center justify-center relative overflow-hidden p-2 md:p-4 border border-slate-300/80 shadow-inner select-none">
       
-      {/* 1. Subtle Dong Son & Geometric Background Watermark (Panoramic 4:3) */}
+      {/* 1. Dong Son Sun Rays & Solar Circle Watermark */}
       <svg 
-        className="absolute inset-0 w-full h-full opacity-6 pointer-events-none" 
+        className="absolute inset-0 w-full h-full pointer-events-none opacity-20" 
         viewBox="0 0 640 460" 
         fill="none" 
         xmlns="http://www.w3.org/2000/svg"
         preserveAspectRatio="xMidYMid slice"
       >
-        {/* Central Dong Son Sun Rays */}
-        <circle cx="320" cy="230" r="210" stroke="#1e3a2b" strokeWidth="1.5" strokeDasharray="6 6" />
-        <circle cx="320" cy="230" r="160" stroke="#1e3a2b" strokeWidth="1" />
-        <circle cx="320" cy="230" r="110" stroke="#1e3a2b" strokeWidth="1.5" strokeDasharray="3 3" />
-        <circle cx="320" cy="230" r="60" stroke="#1e3a2b" strokeWidth="1" />
+        <circle cx="320" cy="230" r="210" stroke="#1b4d3e" strokeWidth="2" strokeDasharray="8 6" />
+        <circle cx="320" cy="230" r="160" stroke="#1b4d3e" strokeWidth="1.5" />
+        <circle cx="320" cy="230" r="110" stroke="#1b4d3e" strokeWidth="2" strokeDasharray="4 4" />
+        <circle cx="320" cy="230" r="60" stroke="#1b4d3e" strokeWidth="1.5" />
         
-        {/* 16 Sun Star Points */}
+        {/* 16 Sun Star Rays */}
         {[0, 22.5, 45, 67.5, 90, 112.5, 135, 157.5, 180, 202.5, 225, 247.5, 270, 292.5, 315, 337.5].map((deg, i) => (
           <line
             key={i}
@@ -37,45 +36,45 @@ export default function VietnamCenterArtwork({ lastCenterBanner }: VietnamCenter
             y1="230"
             x2={320 + 200 * Math.cos((deg * Math.PI) / 180)}
             y2={230 + 200 * Math.sin((deg * Math.PI) / 180)}
-            stroke="#1e3a2b"
-            strokeWidth="1.2"
+            stroke="#1b4d3e"
+            strokeWidth="1.5"
           />
         ))}
 
         {/* 4 Corner Traditional Lotus Ornaments */}
-        <path d="M 40 40 C 70 15, 110 50, 120 90 C 80 100, 40 70, 40 40 Z" fill="#1e3a2b" />
-        <path d="M 600 40 C 570 15, 530 50, 520 90 C 560 100, 600 70, 600 40 Z" fill="#1e3a2b" />
-        <path d="M 40 420 C 70 445, 110 410, 120 370 C 80 360, 40 390, 40 420 Z" fill="#1e3a2b" />
-        <path d="M 600 420 C 570 445, 530 410, 520 370 C 560 360, 600 390, 600 420 Z" fill="#1e3a2b" />
+        <path d="M 30 30 C 60 10, 100 40, 110 80 C 70 90, 30 60, 30 30 Z" fill="#1b4d3e" />
+        <path d="M 610 30 C 580 10, 540 40, 530 80 C 570 90, 610 60, 610 30 Z" fill="#1b4d3e" />
+        <path d="M 30 430 C 60 450, 100 420, 110 380 C 70 370, 30 400, 30 430 Z" fill="#1b4d3e" />
+        <path d="M 610 430 C 580 450, 540 420, 530 380 C 570 370, 610 400, 610 430 Z" fill="#1b4d3e" />
       </svg>
 
       {/* 2. Panoramic Vietnamese Landscape Silhouette (Limestone Karsts, River & Sampan Boat) */}
       <svg 
-        className="absolute inset-0 w-full h-full opacity-8 pointer-events-none" 
+        className="absolute inset-0 w-full h-full pointer-events-none opacity-22" 
         viewBox="0 0 640 460" 
         preserveAspectRatio="none"
         xmlns="http://www.w3.org/2000/svg"
       >
         {/* Distant Limestone Karsts (Ha Long / Ninh Binh style) */}
         <path 
-          d="M 0 300 Q 70 200 150 250 T 300 270 Q 370 170 460 230 T 580 250 Q 610 210 640 230 L 640 460 L 0 460 Z" 
+          d="M 0 310 Q 70 210 150 260 T 300 280 Q 370 180 460 240 T 580 260 Q 610 220 640 240 L 640 460 L 0 460 Z" 
           fill="#1b4d3e" 
         />
         
         {/* Midground Layer with Gentle Green Hills */}
         <path 
-          d="M 0 350 Q 110 280 220 330 T 450 340 Q 550 290 640 340 L 640 460 L 0 460 Z" 
+          d="M 0 360 Q 110 290 220 340 T 450 350 Q 550 300 640 350 L 640 460 L 0 460 Z" 
           fill="#13382c" 
         />
 
         {/* Flowing Water Wave Layer */}
         <path 
-          d="M 0 390 C 160 370, 320 420, 640 380 L 640 460 L 0 460 Z" 
+          d="M 0 395 C 160 375, 320 425, 640 385 L 640 460 L 0 460 Z" 
           fill="#2b6b55" 
         />
 
         {/* Traditional Wooden Sampan Boat (Thuyen Nan) */}
-        <g transform="translate(310, 385) scale(0.8)">
+        <g transform="translate(310, 390) scale(0.85)">
           <path d="M 0 10 Q 30 20 60 10 Q 48 24 12 24 Z" fill="#0d2b1f" />
           <line x1="30" y1="12" x2="30" y2="-4" stroke="#0d2b1f" strokeWidth="2" />
           <path d="M 30 -4 L 46 6 L 30 10 Z" fill="#0d2b1f" />
@@ -87,16 +86,16 @@ export default function VietnamCenterArtwork({ lastCenterBanner }: VietnamCenter
         
         {/* Ornamental Top Header */}
         <div className="flex items-center justify-center gap-2 md:gap-3 mb-1">
-          <span className="h-0.5 w-8 md:w-16 bg-red-600/50 rounded-full" />
-          <span className="text-[9px] md:text-xs font-black tracking-widest text-red-900/90 uppercase">
+          <span className="h-0.5 w-6 md:w-12 bg-red-600/60 rounded-full" />
+          <span className="text-[8.5px] md:text-xs font-black tracking-widest text-red-900 uppercase">
             TRÒ CHƠI DÂN GIAN VIỆT NAM
           </span>
-          <span className="h-0.5 w-8 md:w-16 bg-red-600/50 rounded-full" />
+          <span className="h-0.5 w-6 md:w-12 bg-red-600/60 rounded-full" />
         </div>
 
         {/* Grand Title */}
         <h1 
-          className="text-4xl md:text-6xl lg:text-7xl font-black text-red-600 tracking-tight whitespace-nowrap drop-shadow-md"
+          className="text-3xl md:text-5xl lg:text-6xl font-black text-red-600 tracking-tight whitespace-nowrap drop-shadow-md"
           style={{
             textShadow: '0 4px 14px rgba(220, 38, 38, 0.25), 0 2px 0 #991b1b'
           }}
@@ -105,7 +104,7 @@ export default function VietnamCenterArtwork({ lastCenterBanner }: VietnamCenter
         </h1>
         
         {/* Lacquer Gold Regional Badge */}
-        <div className="inline-flex items-center gap-1.5 bg-linear-to-r from-amber-400 via-yellow-400 to-amber-500 text-slate-950 font-black text-[10px] md:text-xs lg:text-sm px-3.5 py-0.8 md:py-1 rounded-full uppercase tracking-wider shadow-xs mt-1 border border-amber-600/60">
+        <div className="inline-flex items-center gap-1.5 bg-linear-to-r from-amber-400 via-yellow-400 to-amber-500 text-slate-950 font-black text-[9px] md:text-xs lg:text-sm px-3 py-0.5 md:py-1 rounded-full uppercase tracking-wider shadow-xs mt-1 border border-amber-600/60">
           <span>Phiên Bản Đô Thị & Danh Lam</span>
           <span className="text-xs md:text-sm leading-none">🇻🇳</span>
         </div>
@@ -119,7 +118,7 @@ export default function VietnamCenterArtwork({ lastCenterBanner }: VietnamCenter
             initial={{ opacity: 0, y: 20, scale: 0.9 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, scale: 0.9 }}
-            className="absolute bottom-4 md:bottom-6 z-30 max-w-[88%] bg-slate-950/95 backdrop-blur-md text-white text-xs md:text-sm font-bold px-4 py-2 rounded-2xl shadow-2xl border border-amber-400/50 flex items-center gap-2 text-center"
+            className="absolute bottom-3 md:bottom-5 z-30 max-w-[88%] bg-slate-950/95 backdrop-blur-md text-white text-xs md:text-sm font-bold px-4 py-2 rounded-2xl shadow-2xl border border-amber-400/50 flex items-center gap-2 text-center"
           >
             <span>{lastCenterBanner.text}</span>
           </motion.div>
