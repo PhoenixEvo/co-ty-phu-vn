@@ -15,10 +15,15 @@ export default function PlayerToken({ color, name, isCurrent, isMe, isStepping }
   return (
     <motion.div
       layout
-      transition={{ type: 'spring', damping: 18, stiffness: 260 }}
+      transition={{ 
+        layout: { duration: 0.35, ease: 'easeInOut' },
+        type: 'spring', 
+        damping: 16, 
+        stiffness: 190 
+      }}
       animate={isStepping ? {
-        scale: [1, 1.25, 1],
-        y: [0, -8, 0],
+        scale: [1, 1.35, 1],
+        y: [0, -14, 0],
       } : isCurrent ? {
         y: [0, -4, 0],
       } : {

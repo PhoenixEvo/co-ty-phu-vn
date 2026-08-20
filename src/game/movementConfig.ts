@@ -1,7 +1,7 @@
 export const MOVEMENT_CONFIG = {
-  stepDuration: 200, // ms per step
-  stepDelay: 50,     // ms pause between steps
-  landingDuration: 250, // ms landing bounce effect
+  stepDuration: 360,     // ms per step (smooth, deliberate stepping so players can track each tile)
+  stepDelay: 200,        // ms delay before first step starts
+  landingDuration: 400,  // ms landing pause before showing card/action
 };
 
 /**
