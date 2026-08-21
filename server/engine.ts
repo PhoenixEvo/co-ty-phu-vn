@@ -30,6 +30,9 @@ export function createInitialState(roomId: string): GameState {
 }
 
 function ensurePlayerStats(state: GameState, playerId: string): PlayerStats {
+  if (!state.playerStats) {
+    state.playerStats = {};
+  }
   if (!state.playerStats[playerId]) {
     state.playerStats[playerId] = {
       totalRentPaid: 0,
@@ -40,6 +43,12 @@ function ensurePlayerStats(state: GameState, playerId: string): PlayerStats {
     };
   }
   return state.playerStats[playerId];
+}
+
+function addStat(state: GameState, playerId: string, field: keyof PlayerStats, amount: number = 1) {
+  if (!playerId) return;
+  const stats = ensurePlayerStats(state, playerId);
+  stats[field] += amount;
 }
 
 function logEvent(
@@ -165,13 +174,13 @@ function nextPlayer(state: GameState) {
 export function gameReducer(state: GameState, action: ClientAction, playerId: string): GameState {
   const draft = JSON.parse(JSON.stringify(state)) as GameState;
 
+  if (!draft.playerStats) draft.playerStats = {};
+  if (!draft.jackpotPool) draft.jackpotPool = 1_000_000;
+  draft.players.forEach(p => ensurePlayerStats(draft, p.id));
+
   const player = draft.players.find(p => p.id === playerId);
   const isHost = draft.players.length > 0 && draft.players[0].id === playerId;
   const isCurrentTurn = draft.playerOrder[draft.currentPlayerIndex] === playerId;
-
-  if (player) {
-    ensurePlayerStats(draft, player.id);
-  }
 
   switch (action.type) {
     case 'JOIN_GAME': {
@@ -272,7 +281,7 @@ export function gameReducer(state: GameState, action: ClientAction, playerId: st
       logEvent(draft, `${player.nickname} đổ xúc xắc: ${d1} + ${d2} = ${d1 + d2}`, 'roll', playerId);
 
       if (isDouble) {
-        draft.playerStats[player.id].doublesCount += 1;
+        addStat(draft, player.id, 'doublesCount', 1);
       }
 
       if (player.inJail) {
@@ -302,7 +311,7 @@ export function gameReducer(state: GameState, action: ClientAction, playerId: st
           player.position = 10;
           player.inJail = true;
           player.doublesCount = 0;
-          draft.playerStats[player.id].jailCount += 1;
+          addStat(draft, player.id, 'jailCount', 1);
           setCenterBanner(draft, `🚓 ${player.nickname} BỊ VÀO TÙ!`, 'jail');
           nextPlayer(draft);
           return draft;
@@ -352,8 +361,8 @@ export function gameReducer(state: GameState, action: ClientAction, playerId: st
                 if (player.money >= rent) {
                   player.money -= rent;
                   owner.money += rent;
-                  draft.playerStats[player.id].totalRentPaid += rent;
-                  draft.playerStats[owner.id].totalRentEarned += rent;
+                  addStat(draft, player.id, 'totalRentPaid', rent);
+                  addStat(draft, owner.id, 'totalRentEarned', rent);
                   logEvent(draft, `${player.nickname} trả ${formatMoney(rent)} tiền thuê cho ${owner.nickname}.`, 'rent', playerId, -rent);
                   setCenterBanner(draft, `💸 ${player.nickname} TRẢ ${formatMoney(rent)} TIỀN THUÊ`, 'rent');
                   nextPlayer(draft);
@@ -399,7 +408,7 @@ export function gameReducer(state: GameState, action: ClientAction, playerId: st
       } else if (space.type === 'go_to_jail') {
         player.position = 10;
         player.inJail = true;
-        draft.playerStats[player.id].jailCount += 1;
+        addStat(draft, player.id, 'jailCount', 1);
         logEvent(draft, `${player.nickname} bị vào tù!`, 'jail', playerId);
         setCenterBanner(draft, `🚓 ${player.nickname} BỊ VÀO TÙ!`, 'jail');
         nextPlayer(draft);
@@ -512,7 +521,7 @@ export function gameReducer(state: GameState, action: ClientAction, playerId: st
         if (player.money >= cost) {
           player.money -= cost;
           ownership.houseCount += 1;
-          draft.playerStats[player.id].housesBuilt += 1;
+          addStat(draft, player.id, 'housesBuilt', 1);
           const upgradeLabel = ownership.houseCount === 5 ? 'KHÁCH SẠN 🏨' : `${ownership.houseCount} NHÀ 🏠`;
           logEvent(draft, `${player.nickname} đã nâng cấp ${space.name} lên ${upgradeLabel} (${formatMoney(cost)}).`, 'upgrade', playerId, -cost);
           setCenterBanner(draft, `🏗️ ${player.nickname} XÂY ${upgradeLabel} TẠI ${space.name.toUpperCase()}`, 'upgrade');
@@ -594,8 +603,8 @@ export function gameReducer(state: GameState, action: ClientAction, playerId: st
         player.money -= rentAmount;
         if (creditor) {
           creditor.money += rentAmount;
-          draft.playerStats[player.id].totalRentPaid += rentAmount;
-          draft.playerStats[creditor.id].totalRentEarned += rentAmount;
+          addStat(draft, player.id, 'totalRentPaid', rentAmount);
+          addStat(draft, creditor.id, 'totalRentEarned', rentAmount);
         }
         logEvent(draft, `${player.nickname} đã trả ${formatMoney(rentAmount)} tiền thuê cho ${creditor?.nickname || 'đối thủ'}.`, 'rent', playerId, -rentAmount);
         setCenterBanner(draft, `💸 ${player.nickname} ĐÃ THANH TOÁN TIỀN THUÊ`, 'rent');
@@ -855,7 +864,7 @@ export function gameReducer(state: GameState, action: ClientAction, playerId: st
       if (card.effect.type === 'jail') {
         player.position = 10;
         player.inJail = true;
-        draft.playerStats[player.id].jailCount += 1;
+        addStat(draft, player.id, 'jailCount', 1);
         logEvent(draft, `${player.nickname} bị đưa vào tù!`, 'jail', playerId);
         setCenterBanner(draft, `🚓 ${player.nickname} BỊ VÀO TÙ!`, 'jail');
         nextPlayer(draft);
@@ -891,8 +900,8 @@ export function gameReducer(state: GameState, action: ClientAction, playerId: st
                 if (player.money >= rent) {
                   player.money -= rent;
                   owner.money += rent;
-                  draft.playerStats[player.id].totalRentPaid += rent;
-                  draft.playerStats[owner.id].totalRentEarned += rent;
+                  addStat(draft, player.id, 'totalRentPaid', rent);
+                  addStat(draft, owner.id, 'totalRentEarned', rent);
                   logEvent(draft, `${player.nickname} trả ${formatMoney(rent)} tiền thuê cho ${owner.nickname}.`, 'rent', playerId, -rent);
                   setCenterBanner(draft, `💸 ${player.nickname} TRẢ ${formatMoney(rent)} TIỀN THUÊ`, 'rent');
                   nextPlayer(draft);
@@ -971,8 +980,8 @@ export function gameReducer(state: GameState, action: ClientAction, playerId: st
                 if (player.money >= rent) {
                   player.money -= rent;
                   owner.money += rent;
-                  draft.playerStats[player.id].totalRentPaid += rent;
-                  draft.playerStats[owner.id].totalRentEarned += rent;
+                  addStat(draft, player.id, 'totalRentPaid', rent);
+                  addStat(draft, owner.id, 'totalRentEarned', rent);
                   logEvent(draft, `${player.nickname} trả ${formatMoney(rent)} tiền thuê cho ${owner.nickname}.`, 'rent', playerId, -rent);
                   setCenterBanner(draft, `💸 ${player.nickname} TRẢ ${formatMoney(rent)} TIỀN THUÊ`, 'rent');
                   nextPlayer(draft);
@@ -1012,7 +1021,7 @@ export function gameReducer(state: GameState, action: ClientAction, playerId: st
         } else if (destSpace.type === 'go_to_jail') {
           player.position = 10;
           player.inJail = true;
-          draft.playerStats[player.id].jailCount += 1;
+          addStat(draft, player.id, 'jailCount', 1);
           nextPlayer(draft);
           return draft;
         } else {

@@ -5,7 +5,7 @@ import { GameState, BoardSpace } from '@/game/types';
 import { BOARD_SPACES } from '@/game/boardConfig';
 import { formatMoney } from '@/utils/format';
 import { sounds } from '@/utils/sound';
-import { Gavel, Timer, Sparkles, TrendingUp, Check, X } from 'lucide-react';
+import { Gavel, Timer, Sparkles, TrendingUp, Check, X, EyeOff } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 interface AuctionModalProps {
@@ -17,8 +17,15 @@ interface AuctionModalProps {
 export default function AuctionModal({ state, playerId, dispatch }: AuctionModalProps) {
   const auction = state.activeAuction;
   const me = state.players.find(p => p.id === playerId);
+  const isHost = state.players.length > 0 && state.players[0].id === playerId;
 
   const [timeLeft, setTimeLeft] = useState(10);
+  const [isLocallyDismissed, setIsLocallyDismissed] = useState(false);
+
+  // Reset local dismiss when a new auction starts or new bid is placed
+  useEffect(() => {
+    setIsLocallyDismissed(false);
+  }, [auction?.spaceId, auction?.currentBid]);
 
   useEffect(() => {
     if (!auction) return;
@@ -27,6 +34,7 @@ export default function AuctionModal({ state, playerId, dispatch }: AuctionModal
       const remaining = Math.max(0, Math.ceil((auction.endTime - Date.now()) / 1000));
       setTimeLeft(remaining);
 
+      // Only the host or highest bidder/current player triggers the auction resolution when timer hits 0
       if (remaining <= 0) {
         dispatch({ type: 'PASS_AUCTION' });
       }
@@ -54,11 +62,22 @@ export default function AuctionModal({ state, playerId, dispatch }: AuctionModal
     });
   };
 
-  const handlePass = () => {
-    dispatch({ type: 'PASS_AUCTION' });
-  };
-
   const isTimeCritical = timeLeft <= 3;
+
+  // If user chose to minimize the auction modal for themselves
+  if (isLocallyDismissed) {
+    return (
+      <div className="fixed bottom-4 left-4 z-50 animate-in fade-in select-none">
+        <button
+          onClick={() => setIsLocallyDismissed(false)}
+          className="px-4 py-2.5 rounded-2xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs shadow-2xl border border-amber-300 flex items-center gap-2 cursor-pointer animate-pulse"
+        >
+          <Gavel size={16} />
+          <span>Đang Đấu Giá: {space.name} ({timeLeft}s)</span>
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200 select-none">
@@ -139,10 +158,11 @@ export default function AuctionModal({ state, playerId, dispatch }: AuctionModal
 
           <div className="pt-2">
             <button
-              onClick={handlePass}
-              className="w-full py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white font-bold text-xs rounded-xl border border-slate-700 transition cursor-pointer"
+              onClick={() => setIsLocallyDismissed(true)}
+              className="w-full py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white font-bold text-xs rounded-xl border border-slate-700 transition cursor-pointer flex items-center justify-center gap-1.5"
             >
-              KẾT THÚC / CHỐT PHIÊN ĐẤU GIÁ
+              <EyeOff size={14} />
+              <span>TÔI BỎ QUA (KHÔNG ĐẶT GIÁ)</span>
             </button>
           </div>
         </div>
