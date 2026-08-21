@@ -110,14 +110,25 @@ export default function QuickChatPhrases({ state, playerId, dispatch }: QuickCha
           <span className="text-xs font-bold hidden md:inline">Chat nhanh</span>
         </button>
 
-        {/* Phrases List Popover */}
+        {/* Backdrop for click outside */}
+        {isOpen && (
+          <div 
+            className="fixed inset-0 z-40" 
+            onClick={() => setIsOpen(false)} 
+          />
+        )}
+
+        {/* Phrases List Popover (Opens DOWNWARDS to never get clipped!) */}
         <AnimatePresence>
           {isOpen && (
             <motion.div
-              initial={{ opacity: 0, scale: 0.9, y: 10 }}
+              initial={{ opacity: 0, scale: 0.9, y: -5 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.9, y: 10 }}
-              className="absolute right-0 bottom-full mb-2 bg-slate-900/95 border border-slate-700 p-2 rounded-2xl shadow-2xl backdrop-blur-md z-50 w-64 max-h-72 overflow-y-auto space-y-1 select-none"
+              exit={{ opacity: 0, scale: 0.9, y: -5 }}
+              className="absolute left-0 top-full mt-2 bg-slate-900/98 border border-blue-400/60 p-2 rounded-2xl shadow-2xl backdrop-blur-md z-50 w-64 max-h-72 overflow-y-auto space-y-1 select-none"
+              style={{
+                boxShadow: '0 10px 30px rgba(0,0,0,0.8), 0 0 15px rgba(59, 130, 246, 0.2)'
+              }}
             >
               <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider px-2 py-1">
                 Chọn câu thoại nhanh:

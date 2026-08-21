@@ -94,14 +94,25 @@ export default function QuickReactions({ state, playerId, dispatch }: QuickReact
           <span className="text-xs font-bold hidden md:inline">Biểu cảm</span>
         </button>
 
-        {/* Floating Emoji Selector Dock */}
+        {/* Backdrop for click outside */}
+        {isOpen && (
+          <div 
+            className="fixed inset-0 z-40" 
+            onClick={() => setIsOpen(false)} 
+          />
+        )}
+
+        {/* Floating Emoji Selector Dock (Opens DOWNWARDS to never get clipped!) */}
         <AnimatePresence>
           {isOpen && (
             <motion.div
-              initial={{ opacity: 0, scale: 0.8, y: 10 }}
+              initial={{ opacity: 0, scale: 0.9, y: -5 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.8, y: 10 }}
-              className="absolute right-0 bottom-full mb-2 bg-slate-900/95 border border-slate-700 p-2 rounded-2xl shadow-2xl backdrop-blur-md z-50 flex items-center gap-1.5 select-none"
+              exit={{ opacity: 0, scale: 0.9, y: -5 }}
+              className="absolute left-0 top-full mt-2 bg-slate-900/98 border border-amber-400/60 p-2 rounded-2xl shadow-2xl backdrop-blur-md z-50 flex items-center gap-1.5 select-none"
+              style={{
+                boxShadow: '0 10px 30px rgba(0,0,0,0.8), 0 0 15px rgba(245, 158, 11, 0.2)'
+              }}
             >
               {EMOJIS.map(emoji => (
                 <button

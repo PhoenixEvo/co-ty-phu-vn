@@ -1,9 +1,10 @@
-// Procedural sound synthesizer using Web Audio API
+// Procedural sound synthesizer and Authentic Vietnamese Folk Music Audio Engine
 class SoundEngine {
   private ctx: AudioContext | null = null;
   public enabled: boolean = true;
   public bgmEnabled: boolean = false;
-  private bgmInterval: any = null;
+  private bgmAudio: HTMLAudioElement | null = null;
+  private synthInterval: any = null;
 
   private getContext(): AudioContext | null {
     if (!this.enabled || typeof window === 'undefined') return null;
@@ -126,50 +127,120 @@ class SoundEngine {
     osc.stop(ctx.currentTime + 0.18);
   }
 
-  // Vietnamese Pentatonic Folk Acoustic BGM Generator (Đàn Tranh / Đàn Bầu acoustic ambiance)
+  // ================= AUTHENTIC VIETNAMESE FOLK BGM ENGINE =================
   toggleBgm(): boolean {
     this.bgmEnabled = !this.bgmEnabled;
     if (this.bgmEnabled) {
-      this.startBgm();
+      this.startVietnameseBgm();
     } else {
-      this.stopBgm();
+      this.stopVietnameseBgm();
     }
     return this.bgmEnabled;
   }
 
-  private startBgm() {
-    this.stopBgm();
-    const melody = [523.25, 659.25, 783.99, 880, 1046.50, 880, 783.99, 659.25, 587.33, 523.25, 392.00, 523.25];
-    let noteIdx = 0;
+  private startVietnameseBgm() {
+    if (typeof window === 'undefined') return;
 
-    this.bgmInterval = setInterval(() => {
+    // 1. Try playing authentic traditional Vietnamese / Asian folk acoustic recording (Bamboo Flute & Zither)
+    if (!this.bgmAudio) {
+      this.bgmAudio = new Audio('https://cdn.pixabay.com/download/audio/2022/05/27/audio_1808fbf07a.mp3');
+      this.bgmAudio.loop = true;
+      this.bgmAudio.volume = 0.28;
+    }
+
+    const playPromise = this.bgmAudio.play();
+    if (playPromise !== undefined) {
+      playPromise.catch(() => {
+        // Fallback to rich Vietnamese Pentatonic Đàn Tranh acoustic physical synthesizer
+        this.startVietnameseFolkSynthesizer();
+      });
+    }
+  }
+
+  private stopVietnameseBgm() {
+    if (this.bgmAudio) {
+      this.bgmAudio.pause();
+      this.bgmAudio.currentTime = 0;
+    }
+    if (this.synthInterval) {
+      clearInterval(this.synthInterval);
+      this.synthInterval = null;
+    }
+  }
+
+  // Authentic Vietnamese Pentatonic (Hò, Xự, Xang, Xê, Cống - Lý Cây Đa / Trống Cơm melody) with Plucked String Resonator
+  private startVietnameseFolkSynthesizer() {
+    if (this.synthInterval) clearInterval(this.synthInterval);
+
+    // Traditional Vietnamese Folk Scale (Lý Cây Bông / Trống Cơm motif with authentic slides)
+    const melody: { freq: number; dur: number; bend?: number }[] = [
+      { freq: 440.00, dur: 400, bend: 493.88 }, // A4 -> B4 (Vuốt / Luyến)
+      { freq: 523.25, dur: 350 },               // C5
+      { freq: 587.33, dur: 450, bend: 659.25 }, // D5 -> E5 (Nhấn ngón)
+      { freq: 659.25, dur: 400 },               // E5
+      { freq: 587.33, dur: 350 },               // D5
+      { freq: 523.25, dur: 400, bend: 440.00 }, // C5 -> A4 (Đổ hột)
+      { freq: 440.00, dur: 500 },               // A4
+      { freq: 392.00, dur: 400, bend: 440.00 }, // G4 -> A4
+      { freq: 523.25, dur: 600 },               // C5 ngân dài
+      { freq: 587.33, dur: 350 },               // D5
+      { freq: 659.25, dur: 500, bend: 783.99 }, // E5 -> G5
+      { freq: 523.25, dur: 650 },               // C5 kết câu
+    ];
+
+    let noteIndex = 0;
+
+    const playNextNote = () => {
       if (!this.bgmEnabled) return;
       const ctx = this.getContext();
       if (!ctx) return;
 
-      const osc = ctx.createOscillator();
+      const current = melody[noteIndex % melody.length];
+      const now = ctx.currentTime;
+
+      // 1. Primary string pluck (Sine + Triangle blend for silk string acoustic warmth)
+      const osc1 = ctx.createOscillator();
+      const osc2 = ctx.createOscillator();
       const gain = ctx.createGain();
-      osc.type = 'triangle';
-      
-      const freq = melody[noteIdx % melody.length];
-      osc.frequency.setValueAtTime(freq, ctx.currentTime);
-      gain.gain.setValueAtTime(0.04, ctx.currentTime);
-      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.45);
+      const filter = ctx.createBiquadFilter();
 
-      osc.connect(gain);
+      osc1.type = 'sine';
+      osc2.type = 'triangle';
+
+      // Fundamental frequency
+      osc1.frequency.setValueAtTime(current.freq, now);
+      osc2.frequency.setValueAtTime(current.freq * 2, now); // Overtone harmonic
+
+      // Traditional Vietnamese pitch bend (Luyến / Ngân rung đặc trưng Đàn Tranh)
+      if (current.bend) {
+        osc1.frequency.exponentialRampToValueAtTime(current.bend, now + current.dur / 1000 * 0.7);
+        osc2.frequency.exponentialRampToValueAtTime(current.bend * 2, now + current.dur / 1000 * 0.7);
+      }
+
+      // Warm acoustic lowpass filter
+      filter.type = 'lowpass';
+      filter.frequency.setValueAtTime(1600, now);
+      filter.frequency.exponentialRampToValueAtTime(600, now + current.dur / 1000);
+
+      // Plucked string envelope
+      gain.gain.setValueAtTime(0.06, now);
+      gain.gain.exponentialRampToValueAtTime(0.0005, now + current.dur / 1000 + 0.3);
+
+      osc1.connect(filter);
+      osc2.connect(filter);
+      filter.connect(gain);
       gain.connect(ctx.destination);
-      osc.start();
-      osc.stop(ctx.currentTime + 0.45);
 
-      noteIdx++;
-    }, 450);
-  }
+      osc1.start(now);
+      osc2.start(now);
+      osc1.stop(now + current.dur / 1000 + 0.35);
+      osc2.stop(now + current.dur / 1000 + 0.35);
 
-  private stopBgm() {
-    if (this.bgmInterval) {
-      clearInterval(this.bgmInterval);
-      this.bgmInterval = null;
-    }
+      noteIndex++;
+      this.synthInterval = setTimeout(playNextNote, current.dur);
+    };
+
+    playNextNote();
   }
 }
 
