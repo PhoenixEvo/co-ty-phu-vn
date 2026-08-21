@@ -83,7 +83,7 @@ export interface GameEvent {
   id: string;
   timestamp: number;
   message: string;
-  type?: 'roll' | 'buy' | 'upgrade' | 'mortgage' | 'unmortgage' | 'rent' | 'tax' | 'card' | 'jail' | 'pass_go' | 'bankrupt' | 'trade';
+  type?: 'roll' | 'buy' | 'upgrade' | 'mortgage' | 'unmortgage' | 'rent' | 'tax' | 'card' | 'jail' | 'pass_go' | 'bankrupt' | 'trade' | 'auction' | 'jackpot';
   playerId?: string;
   amount?: number;
 }
@@ -108,6 +108,21 @@ export interface TradeOffer {
   requestedMoney: number;
 }
 
+export interface ActiveAuction {
+  spaceId: string;
+  currentBid: number;
+  highestBidderId: string | null;
+  endTime: number;
+}
+
+export interface PlayerStats {
+  totalRentPaid: number;
+  totalRentEarned: number;
+  doublesCount: number;
+  jailCount: number;
+  housesBuilt: number;
+}
+
 export interface GameState {
   roomId: string;
   revision?: number;
@@ -122,13 +137,14 @@ export interface GameState {
     startingMoney: number;
     goSalary: number;
   };
+  jackpotPool: number;
   winnerId?: string;
   lastDice?: [number, number];
   lastDrawnCard?: Card | null;
   lastCenterBanner?: {
     id: string;
     text: string;
-    type: 'buy' | 'upgrade' | 'rent' | 'card' | 'tax' | 'jail' | 'pass_go';
+    type: 'buy' | 'upgrade' | 'rent' | 'card' | 'tax' | 'jail' | 'pass_go' | 'auction' | 'jackpot';
   } | null;
   awaitingAction?: {
     type: 'buy_property' | 'upgrade_property' | 'pay_tax' | 'pay_rent' | 'card_dismiss';
@@ -138,10 +154,18 @@ export interface GameState {
     creditorId?: string; // Player ID or 'bank'
   } | null;
   activeTradeOffer?: TradeOffer | null;
+  activeAuction?: ActiveAuction | null;
+  playerStats: Record<string, PlayerStats>;
   lastReaction?: {
     id: string;
     playerId: string;
     emoji: string;
+    timestamp: number;
+  } | null;
+  lastChatPhrase?: {
+    id: string;
+    playerId: string;
+    text: string;
     timestamp: number;
   } | null;
 }
@@ -165,7 +189,10 @@ export type ClientAction =
   | { type: 'ACCEPT_TRADE' }
   | { type: 'REJECT_TRADE' }
   | { type: 'CANCEL_TRADE' }
+  | { type: 'BID_AUCTION'; payload: { amount: number } }
+  | { type: 'PASS_AUCTION' }
   | { type: 'SEND_REACTION'; payload: { emoji: string } }
+  | { type: 'SEND_CHAT_PHRASE'; payload: { text: string } }
   | { type: 'DISMISS_CARD' }
   | { type: 'END_TURN' }
   | { type: 'LEAVE_GAME' };

@@ -76,7 +76,10 @@ export default function GameBoard({
         >
           {/* ================= Center Area: Panoramic 4:3 Vietnamese Landscape Artwork ================= */}
           <div className="relative overflow-hidden" style={{ gridArea: '2 / 2 / 11 / 11' }}>
-            <VietnamCenterArtwork lastCenterBanner={state.lastCenterBanner} />
+            <VietnamCenterArtwork 
+              lastCenterBanner={state.lastCenterBanner} 
+              jackpotPool={state.jackpotPool} 
+            />
           </div>
 
           {/* ================= 40 Board Spaces Around Landscape Perimeter ================= */}

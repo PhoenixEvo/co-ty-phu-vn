@@ -1,4 +1,4 @@
-import { GameState, ClientAction, Player, TurnState, BoardSpace, PropertySpace, TransportSpace, UtilitySpace, GameEvent } from '../src/game/types';
+import { GameState, ClientAction, Player, TurnState, BoardSpace, PropertySpace, TransportSpace, UtilitySpace, GameEvent, PlayerStats } from '../src/game/types';
 import { BOARD_SPACES } from '../src/game/boardConfig';
 import { CHANCE_CARDS, FORTUNE_CARDS, Card } from '../src/game/cards';
 import { formatMoney } from '../src/utils/format';
@@ -17,12 +17,29 @@ export function createInitialState(roomId: string): GameState {
       startingMoney: 15_000_000, // 15 Triệu VNĐ (Tương đương $1,500 chuẩn Monopoly)
       goSalary: 2_000_000,       // 2 Triệu VNĐ (Tương đương $200 chuẩn Monopoly)
     },
+    jackpotPool: 1_000_000,      // Hũ tiền Bãi Đỗ Xe khởi điểm 1 Triệu VNĐ
     awaitingAction: null,
     lastDrawnCard: null,
     lastCenterBanner: null,
     activeTradeOffer: null,
-    lastReaction: null
+    activeAuction: null,
+    playerStats: {},
+    lastReaction: null,
+    lastChatPhrase: null
   };
+}
+
+function ensurePlayerStats(state: GameState, playerId: string): PlayerStats {
+  if (!state.playerStats[playerId]) {
+    state.playerStats[playerId] = {
+      totalRentPaid: 0,
+      totalRentEarned: 0,
+      doublesCount: 0,
+      jailCount: 0,
+      housesBuilt: 0
+    };
+  }
+  return state.playerStats[playerId];
 }
 
 function logEvent(
@@ -152,6 +169,10 @@ export function gameReducer(state: GameState, action: ClientAction, playerId: st
   const isHost = draft.players.length > 0 && draft.players[0].id === playerId;
   const isCurrentTurn = draft.playerOrder[draft.currentPlayerIndex] === playerId;
 
+  if (player) {
+    ensurePlayerStats(draft, player.id);
+  }
+
   switch (action.type) {
     case 'JOIN_GAME': {
       if (draft.status !== 'waiting') return draft;
@@ -170,6 +191,7 @@ export function gameReducer(state: GameState, action: ClientAction, playerId: st
           connected: true,
         });
         draft.playerOrder.push(playerId);
+        ensurePlayerStats(draft, playerId);
         logEvent(draft, `${action.payload.nickname} đã tham gia phòng.`, undefined, playerId);
       }
       return draft;
@@ -179,6 +201,7 @@ export function gameReducer(state: GameState, action: ClientAction, playerId: st
       if (!isHost || draft.status !== 'waiting' || draft.players.length < 2 || draft.players.length > 5) return draft;
       draft.status = 'playing';
       draft.turnState = 'AWAITING_ROLL';
+      draft.players.forEach(p => ensurePlayerStats(draft, p.id));
       logEvent(draft, 'Trò chơi bắt đầu!');
       logEvent(draft, `Đến lượt của ${draft.players[0].nickname}.`);
       setCenterBanner(draft, 'TRÒ CHƠI BẮT ĐẦU!', 'pass_go');
@@ -207,7 +230,13 @@ export function gameReducer(state: GameState, action: ClientAction, playerId: st
       draft.lastDrawnCard = null;
       draft.lastCenterBanner = null;
       draft.activeTradeOffer = null;
+      draft.activeAuction = null;
+      draft.jackpotPool = 1_000_000;
+      draft.playerStats = {};
       draft.lastReaction = null;
+      draft.lastChatPhrase = null;
+
+      draft.players.forEach(p => ensurePlayerStats(draft, p.id));
 
       logEvent(draft, '🔄 Phòng chơi đã được làm mới toàn bộ! Sẵn sàng cho trận đấu mới.');
       setCenterBanner(draft, 'PHÒNG CHƠI ĐÃ ĐƯỢC TẠO LẠI!', 'pass_go');
@@ -242,6 +271,10 @@ export function gameReducer(state: GameState, action: ClientAction, playerId: st
       
       logEvent(draft, `${player.nickname} đổ xúc xắc: ${d1} + ${d2} = ${d1 + d2}`, 'roll', playerId);
 
+      if (isDouble) {
+        draft.playerStats[player.id].doublesCount += 1;
+      }
+
       if (player.inJail) {
         if (isDouble) {
           player.inJail = false;
@@ -269,6 +302,7 @@ export function gameReducer(state: GameState, action: ClientAction, playerId: st
           player.position = 10;
           player.inJail = true;
           player.doublesCount = 0;
+          draft.playerStats[player.id].jailCount += 1;
           setCenterBanner(draft, `🚓 ${player.nickname} BỊ VÀO TÙ!`, 'jail');
           nextPlayer(draft);
           return draft;
@@ -293,6 +327,19 @@ export function gameReducer(state: GameState, action: ClientAction, playerId: st
       const space = BOARD_SPACES[player.position];
       logEvent(draft, `${player.nickname} đi đến ô ${space.name}.`);
 
+      // 1. FREE PARKING JACKPOT POOL (Space 20)
+      if (space.type === 'parking') {
+        if (draft.jackpotPool > 0) {
+          const wonJackpot = draft.jackpotPool;
+          player.money += wonJackpot;
+          draft.jackpotPool = 1_000_000; // Reset starting pool
+          logEvent(draft, `🎰 ${player.nickname} giẫm vào Bãi Đỗ Xe và ôm trọn HŨ TIỀN JACKPOT ${formatMoney(wonJackpot)}!`, 'jackpot', playerId, wonJackpot);
+          setCenterBanner(draft, `🎰 ${player.nickname} NỔ HŨ ${formatMoney(wonJackpot)}!`, 'jackpot');
+        }
+        nextPlayer(draft);
+        return draft;
+      }
+
       if (space.type === 'property' || space.type === 'transport' || space.type === 'utility') {
         const ownership = draft.properties[space.id];
         if (ownership) {
@@ -305,6 +352,8 @@ export function gameReducer(state: GameState, action: ClientAction, playerId: st
                 if (player.money >= rent) {
                   player.money -= rent;
                   owner.money += rent;
+                  draft.playerStats[player.id].totalRentPaid += rent;
+                  draft.playerStats[owner.id].totalRentEarned += rent;
                   logEvent(draft, `${player.nickname} trả ${formatMoney(rent)} tiền thuê cho ${owner.nickname}.`, 'rent', playerId, -rent);
                   setCenterBanner(draft, `💸 ${player.nickname} TRẢ ${formatMoney(rent)} TIỀN THUÊ`, 'rent');
                   nextPlayer(draft);
@@ -350,6 +399,7 @@ export function gameReducer(state: GameState, action: ClientAction, playerId: st
       } else if (space.type === 'go_to_jail') {
         player.position = 10;
         player.inJail = true;
+        draft.playerStats[player.id].jailCount += 1;
         logEvent(draft, `${player.nickname} bị vào tù!`, 'jail', playerId);
         setCenterBanner(draft, `🚓 ${player.nickname} BỊ VÀO TÙ!`, 'jail');
         nextPlayer(draft);
@@ -392,11 +442,59 @@ export function gameReducer(state: GameState, action: ClientAction, playerId: st
       return draft;
     }
 
+    // ================= AUCTION TRIGGER WHEN SKIPPING BUY =================
     case 'SKIP_BUY': {
       if (draft.status !== 'playing' || !isCurrentTurn || draft.turnState !== 'AWAITING_ACTION') return draft;
       if (!draft.awaitingAction || draft.awaitingAction.type !== 'buy_property') return draft;
       
+      const space = BOARD_SPACES[draft.awaitingAction.spaceIndex!];
+      const startingBid = Math.floor(((space as any).price || 1_000_000) * 0.3); // 30% base price start
+
+      draft.activeAuction = {
+        spaceId: space.id,
+        currentBid: startingBid,
+        highestBidderId: null,
+        endTime: Date.now() + 12000
+      };
+
       draft.awaitingAction = null;
+      logEvent(draft, `🔨 ${player?.nickname || 'Người chơi'} không mua ${space.name}. Bắt đầu phiên ĐẤU GIÁ CÔNG KHAI! Khởi điểm: ${formatMoney(startingBid)}.`, 'auction');
+      setCenterBanner(draft, `🔨 ĐẤU GIÁ ${space.name.toUpperCase()}!`, 'auction');
+      return draft;
+    }
+
+    case 'BID_AUCTION': {
+      if (draft.status !== 'playing' || !draft.activeAuction || !player || player.isBankrupt) return draft;
+      const { amount } = action.payload;
+      const space = BOARD_SPACES.find(s => s.id === draft.activeAuction?.spaceId);
+
+      if (amount > draft.activeAuction.currentBid && player.money >= amount) {
+        draft.activeAuction.currentBid = amount;
+        draft.activeAuction.highestBidderId = playerId;
+        draft.activeAuction.endTime = Date.now() + 8000; // Reset 8s for exciting bidding war
+        logEvent(draft, `🔨 ${player.nickname} trả giá ${formatMoney(amount)} cho ${space?.name || 'ô đất'}.`, 'auction', playerId);
+      }
+      return draft;
+    }
+
+    case 'PASS_AUCTION': {
+      if (draft.status !== 'playing' || !draft.activeAuction) return draft;
+      const auction = draft.activeAuction;
+      const space = BOARD_SPACES.find(s => s.id === auction.spaceId);
+
+      if (auction.highestBidderId) {
+        const winner = draft.players.find(p => p.id === auction.highestBidderId);
+        if (winner && winner.money >= auction.currentBid && space) {
+          winner.money -= auction.currentBid;
+          draft.properties[space.id] = { ownerId: winner.id, houseCount: 0, isMortgaged: false };
+          logEvent(draft, `🎉 ${winner.nickname} đã thắng phiên đấu giá ${space.name} với mức giá ${formatMoney(auction.currentBid)}!`, 'auction', winner.id, -auction.currentBid);
+          setCenterBanner(draft, `🎉 ${winner.nickname} THẮNG ĐẤU GIÁ!`, 'buy');
+        }
+      } else {
+        logEvent(draft, `Phiên đấu giá ${space?.name || 'ô đất'} kết thúc mà không có ai đặt giá.`, 'auction');
+      }
+
+      draft.activeAuction = null;
       nextPlayer(draft);
       return draft;
     }
@@ -414,6 +512,7 @@ export function gameReducer(state: GameState, action: ClientAction, playerId: st
         if (player.money >= cost) {
           player.money -= cost;
           ownership.houseCount += 1;
+          draft.playerStats[player.id].housesBuilt += 1;
           const upgradeLabel = ownership.houseCount === 5 ? 'KHÁCH SẠN 🏨' : `${ownership.houseCount} NHÀ 🏠`;
           logEvent(draft, `${player.nickname} đã nâng cấp ${space.name} lên ${upgradeLabel} (${formatMoney(cost)}).`, 'upgrade', playerId, -cost);
           setCenterBanner(draft, `🏗️ ${player.nickname} XÂY ${upgradeLabel} TẠI ${space.name.toUpperCase()}`, 'upgrade');
@@ -493,7 +592,11 @@ export function gameReducer(state: GameState, action: ClientAction, playerId: st
 
       if (player.money >= rentAmount) {
         player.money -= rentAmount;
-        if (creditor) creditor.money += rentAmount;
+        if (creditor) {
+          creditor.money += rentAmount;
+          draft.playerStats[player.id].totalRentPaid += rentAmount;
+          draft.playerStats[creditor.id].totalRentEarned += rentAmount;
+        }
         logEvent(draft, `${player.nickname} đã trả ${formatMoney(rentAmount)} tiền thuê cho ${creditor?.nickname || 'đối thủ'}.`, 'rent', playerId, -rentAmount);
         setCenterBanner(draft, `💸 ${player.nickname} ĐÃ THANH TOÁN TIỀN THUÊ`, 'rent');
         draft.awaitingAction = null;
@@ -553,8 +656,9 @@ export function gameReducer(state: GameState, action: ClientAction, playerId: st
       
       if (player.money >= amount) {
         player.money -= amount;
-        logEvent(draft, `${player.nickname} đã nộp thuế ${formatMoney(amount)}.`, 'tax', playerId, -amount);
-        setCenterBanner(draft, `🧾 ${player.nickname} NỘP THUẾ ${formatMoney(amount)}`, 'tax');
+        draft.jackpotPool += amount; // Tax money flows directly into the Free Parking Jackpot Pool!
+        logEvent(draft, `${player.nickname} đã nộp thuế ${formatMoney(amount)} (tiền được nạp vào Hũ Jackpot).`, 'tax', playerId, -amount);
+        setCenterBanner(draft, `🧾 ${player.nickname} NỘP THUẾ (HŨ +${formatMoney(amount)})`, 'tax');
         draft.awaitingAction = null;
         nextPlayer(draft);
       } else {
@@ -636,7 +740,7 @@ export function gameReducer(state: GameState, action: ClientAction, playerId: st
       return draft;
     }
 
-    // ================= EMOJI REACTION MECHANICS =================
+    // ================= EMOJI & CHAT REACTION MECHANICS =================
     case 'SEND_REACTION': {
       if (!player) return draft;
       draft.lastReaction = {
@@ -645,6 +749,18 @@ export function gameReducer(state: GameState, action: ClientAction, playerId: st
         emoji: action.payload.emoji,
         timestamp: Date.now()
       };
+      return draft;
+    }
+
+    case 'SEND_CHAT_PHRASE': {
+      if (!player) return draft;
+      draft.lastChatPhrase = {
+        id: Math.random().toString(36).substring(2, 9),
+        playerId,
+        text: action.payload.text,
+        timestamp: Date.now()
+      };
+      logEvent(draft, `💬 ${player.nickname}: "${action.payload.text}"`);
       return draft;
     }
 
@@ -664,6 +780,9 @@ export function gameReducer(state: GameState, action: ClientAction, playerId: st
       // 1. Money change effect
       if (card.effect.type === 'money' && card.effect.amount) {
         player.money += card.effect.amount;
+        if (card.effect.amount < 0) {
+          draft.jackpotPool += Math.abs(card.effect.amount); // Fees feed into Jackpot
+        }
         if (player.money < 0) {
           player.isBankrupt = true;
           logEvent(draft, `${player.nickname} đã phá sản do không đủ tiền trả phí thẻ!`, 'bankrupt', playerId);
@@ -688,7 +807,7 @@ export function gameReducer(state: GameState, action: ClientAction, playerId: st
         return draft;
       }
 
-      // 3. Pay to all players effect (e.g. treat everyone to hotpot)
+      // 3. Pay to all players effect
       if (card.effect.type === 'pay_to_all' && card.effect.amount) {
         const amt = card.effect.amount;
         draft.players.forEach(otherP => {
@@ -721,6 +840,7 @@ export function gameReducer(state: GameState, action: ClientAction, playerId: st
 
         const totalRepairCost = houses * houseFee + hotels * hotelFee;
         player.money -= totalRepairCost;
+        draft.jackpotPool += totalRepairCost; // Maintenance fees flow into the Free Parking Jackpot Pool!
         logEvent(draft, `${player.nickname} nộp ${formatMoney(totalRepairCost)} chi phí bảo trì (${houses} nhà, ${hotels} khách sạn).`, 'tax', playerId, -totalRepairCost);
         
         if (player.money < 0) {
@@ -735,20 +855,32 @@ export function gameReducer(state: GameState, action: ClientAction, playerId: st
       if (card.effect.type === 'jail') {
         player.position = 10;
         player.inJail = true;
+        draft.playerStats[player.id].jailCount += 1;
         logEvent(draft, `${player.nickname} bị đưa vào tù!`, 'jail', playerId);
         setCenterBanner(draft, `🚓 ${player.nickname} BỊ VÀO TÙ!`, 'jail');
         nextPlayer(draft);
         return draft;
       }
 
-      // 6. Move relative steps (e.g. backward 3 steps)
+      // 6. Move relative steps
       if (card.effect.type === 'move_steps' && card.effect.steps !== undefined) {
         const targetPos = (player.position + card.effect.steps + 40) % 40;
         player.position = targetPos;
         const destSpace = BOARD_SPACES[targetPos];
         logEvent(draft, `${player.nickname} di chuyển ${card.effect.steps > 0 ? 'tiến' : 'lùi'} ${Math.abs(card.effect.steps)} ô đến ${destSpace.name}.`);
 
-        // Resolve destination space
+        if (destSpace.type === 'parking') {
+          if (draft.jackpotPool > 0) {
+            const wonJackpot = draft.jackpotPool;
+            player.money += wonJackpot;
+            draft.jackpotPool = 1_000_000;
+            logEvent(draft, `🎰 ${player.nickname} giẫm vào Bãi Đỗ Xe và ôm trọn HŨ TIỀN JACKPOT ${formatMoney(wonJackpot)}!`, 'jackpot', playerId, wonJackpot);
+            setCenterBanner(draft, `🎰 ${player.nickname} NỔ HŨ ${formatMoney(wonJackpot)}!`, 'jackpot');
+          }
+          nextPlayer(draft);
+          return draft;
+        }
+
         if (destSpace.type === 'property' || destSpace.type === 'transport' || destSpace.type === 'utility') {
           const ownership = draft.properties[destSpace.id];
           if (ownership) {
@@ -759,6 +891,8 @@ export function gameReducer(state: GameState, action: ClientAction, playerId: st
                 if (player.money >= rent) {
                   player.money -= rent;
                   owner.money += rent;
+                  draft.playerStats[player.id].totalRentPaid += rent;
+                  draft.playerStats[owner.id].totalRentEarned += rent;
                   logEvent(draft, `${player.nickname} trả ${formatMoney(rent)} tiền thuê cho ${owner.nickname}.`, 'rent', playerId, -rent);
                   setCenterBanner(draft, `💸 ${player.nickname} TRẢ ${formatMoney(rent)} TIỀN THUÊ`, 'rent');
                   nextPlayer(draft);
@@ -805,7 +939,6 @@ export function gameReducer(state: GameState, action: ClientAction, playerId: st
       if (card.effect.type === 'move_to' && card.effect.targetPosition !== undefined) {
         const targetPos = card.effect.targetPosition;
         
-        // Pass or land on GO bonus check (Fix bug: receiving 2.000.000 ₫ when returning to Start position 0)
         if (targetPos === 0 || targetPos < player.position) {
           player.money += draft.config.goSalary;
           logEvent(draft, `${player.nickname} đi qua Bắt Đầu và nhận ${formatMoney(draft.config.goSalary)}.`, 'pass_go', playerId, draft.config.goSalary);
@@ -816,18 +949,30 @@ export function gameReducer(state: GameState, action: ClientAction, playerId: st
         const destSpace = BOARD_SPACES[targetPos];
         logEvent(draft, `${player.nickname} dịch chuyển đến ${destSpace.name}.`);
 
-        // Resolve destination space now!
+        if (destSpace.type === 'parking') {
+          if (draft.jackpotPool > 0) {
+            const wonJackpot = draft.jackpotPool;
+            player.money += wonJackpot;
+            draft.jackpotPool = 1_000_000;
+            logEvent(draft, `🎰 ${player.nickname} giẫm vào Bãi Đỗ Xe và ôm trọn HŨ TIỀN JACKPOT ${formatMoney(wonJackpot)}!`, 'jackpot', playerId, wonJackpot);
+            setCenterBanner(draft, `🎰 ${player.nickname} NỔ HŨ ${formatMoney(wonJackpot)}!`, 'jackpot');
+          }
+          nextPlayer(draft);
+          return draft;
+        }
+
         if (destSpace.type === 'property' || destSpace.type === 'transport' || destSpace.type === 'utility') {
           const ownership = draft.properties[destSpace.id];
           if (ownership) {
             if (ownership.ownerId !== player.id) {
-              // Opponent property: Pay rent
               const owner = draft.players.find(p => p.id === ownership.ownerId);
               if (owner && !owner.inJail && !ownership.isMortgaged) {
                 const rent = calculateRent(draft, destSpace, 7);
                 if (player.money >= rent) {
                   player.money -= rent;
                   owner.money += rent;
+                  draft.playerStats[player.id].totalRentPaid += rent;
+                  draft.playerStats[owner.id].totalRentEarned += rent;
                   logEvent(draft, `${player.nickname} trả ${formatMoney(rent)} tiền thuê cho ${owner.nickname}.`, 'rent', playerId, -rent);
                   setCenterBanner(draft, `💸 ${player.nickname} TRẢ ${formatMoney(rent)} TIỀN THUÊ`, 'rent');
                   nextPlayer(draft);
@@ -846,7 +991,6 @@ export function gameReducer(state: GameState, action: ClientAction, playerId: st
               nextPlayer(draft);
               return draft;
             } else {
-              // Own property: Allow upgrade if property and < 5 houses
               if (destSpace.type === 'property' && !ownership.isMortgaged && ownership.houseCount < 5) {
                 draft.turnState = 'AWAITING_ACTION';
                 draft.awaitingAction = { type: 'upgrade_property', spaceIndex: targetPos };
@@ -857,7 +1001,6 @@ export function gameReducer(state: GameState, action: ClientAction, playerId: st
               }
             }
           } else {
-            // Unowned space: ALLOW PLAYER TO BUY IT!
             draft.turnState = 'AWAITING_ACTION';
             draft.awaitingAction = { type: 'buy_property', spaceIndex: targetPos };
             return draft;
@@ -869,6 +1012,7 @@ export function gameReducer(state: GameState, action: ClientAction, playerId: st
         } else if (destSpace.type === 'go_to_jail') {
           player.position = 10;
           player.inJail = true;
+          draft.playerStats[player.id].jailCount += 1;
           nextPlayer(draft);
           return draft;
         } else {

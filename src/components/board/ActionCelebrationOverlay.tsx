@@ -3,8 +3,9 @@
 import React, { useEffect, useState } from 'react';
 import { GameState, GameEvent } from '@/game/types';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Sparkles, Zap, Flame, ShieldAlert, Coins, Skull, Unlock, Lock } from 'lucide-react';
+import { Sparkles, Zap, Flame, ShieldAlert, Coins, Skull, Unlock, Lock, Trophy } from 'lucide-react';
 import { formatMoney } from '@/utils/format';
+import { triggerHaptic } from '@/utils/haptics';
 
 interface ActionCelebrationOverlayProps {
   state: GameState;
@@ -13,7 +14,7 @@ interface ActionCelebrationOverlayProps {
 export default function ActionCelebrationOverlay({ state }: ActionCelebrationOverlayProps) {
   const [activeAnimation, setActiveAnimation] = useState<{
     id: string;
-    type: 'pass_go' | 'double' | 'jail' | 'unjail' | 'rent' | 'upgrade' | 'bankrupt';
+    type: 'pass_go' | 'double' | 'jail' | 'unjail' | 'rent' | 'upgrade' | 'bankrupt' | 'jackpot';
     text: string;
     subText?: string;
   } | null>(null);
@@ -23,8 +24,19 @@ export default function ActionCelebrationOverlay({ state }: ActionCelebrationOve
   useEffect(() => {
     if (!lastEvent) return;
 
+    // 0. Free Parking Jackpot Won
+    if (lastEvent.type === 'jackpot') {
+      triggerHaptic('jackpot');
+      setActiveAnimation({
+        id: lastEvent.id,
+        type: 'jackpot',
+        text: '🎰 NỔ HŨ JACKPOT BÃI ĐỖ XE!',
+        subText: `+ ${formatMoney(lastEvent.amount || 1_000_000)}`
+      });
+    }
     // 1. Pass GO Payday
-    if (lastEvent.type === 'pass_go') {
+    else if (lastEvent.type === 'pass_go') {
+      triggerHaptic('medium');
       setActiveAnimation({
         id: lastEvent.id,
         type: 'pass_go',
@@ -34,6 +46,7 @@ export default function ActionCelebrationOverlay({ state }: ActionCelebrationOve
     }
     // 2. Rolling Doubles
     else if (lastEvent.type === 'roll' && state.lastDice && state.lastDice[0] === state.lastDice[1] && !lastEvent.message.includes('vào tù')) {
+      triggerHaptic('heavy');
       setActiveAnimation({
         id: lastEvent.id,
         type: 'double',
@@ -43,6 +56,7 @@ export default function ActionCelebrationOverlay({ state }: ActionCelebrationOve
     }
     // 3. Sent to Jail
     else if (lastEvent.type === 'jail' && lastEvent.message.includes('vào tù')) {
+      triggerHaptic('heavy');
       setActiveAnimation({
         id: lastEvent.id,
         type: 'jail',
@@ -52,6 +66,7 @@ export default function ActionCelebrationOverlay({ state }: ActionCelebrationOve
     }
     // 4. Bail out of Jail
     else if (lastEvent.type === 'jail' && (lastEvent.message.includes('nộp phạt') || lastEvent.message.includes('ra tù'))) {
+      triggerHaptic('medium');
       setActiveAnimation({
         id: lastEvent.id,
         type: 'unjail',
@@ -61,6 +76,7 @@ export default function ActionCelebrationOverlay({ state }: ActionCelebrationOve
     }
     // 5. Upgraded Property
     else if (lastEvent.type === 'upgrade') {
+      triggerHaptic('light');
       setActiveAnimation({
         id: lastEvent.id,
         type: 'upgrade',
@@ -70,6 +86,7 @@ export default function ActionCelebrationOverlay({ state }: ActionCelebrationOve
     }
     // 6. Bankrupt
     else if (lastEvent.type === 'bankrupt') {
+      triggerHaptic('heavy');
       setActiveAnimation({
         id: lastEvent.id,
         type: 'bankrupt',
@@ -80,7 +97,7 @@ export default function ActionCelebrationOverlay({ state }: ActionCelebrationOve
 
     const timer = setTimeout(() => {
       setActiveAnimation(null);
-    }, 2400);
+    }, 2500);
 
     return () => clearTimeout(timer);
   }, [lastEvent?.id]);
@@ -97,10 +114,32 @@ export default function ActionCelebrationOverlay({ state }: ActionCelebrationOve
             transition={{ type: 'spring', damping: 14, stiffness: 180 }}
             className="flex flex-col items-center justify-center p-4 max-w-sm text-center"
           >
+            {/* 0. JACKPOT WON: Grand Fireworks & Golden Rain */}
+            {activeAnimation.type === 'jackpot' && (
+              <div className="relative flex flex-col items-center">
+                {Array.from({ length: 12 }).map((_, i) => (
+                  <motion.div
+                    key={i}
+                    initial={{ y: -80, opacity: 0, x: (i - 6) * 26 }}
+                    animate={{ y: 100, opacity: [0, 1, 0], rotate: 720 }}
+                    transition={{ duration: 2, delay: i * 0.1, ease: 'easeOut' }}
+                    className="absolute text-3xl filter drop-shadow"
+                  >
+                    🎰
+                  </motion.div>
+                ))}
+
+                <div className="bg-linear-to-r from-red-600 via-amber-400 to-yellow-500 text-slate-950 p-5 rounded-3xl shadow-2xl border-4 border-yellow-200 flex flex-col items-center animate-bounce">
+                  <div className="text-5xl mb-1">🎰💎</div>
+                  <h3 className="font-black text-xl tracking-tight uppercase">{activeAnimation.text}</h3>
+                  <p className="font-mono font-black text-2xl md:text-3xl text-emerald-950 mt-1">{activeAnimation.subText}</p>
+                </div>
+              </div>
+            )}
+
             {/* 1. PASS GO: Golden Coin Shower */}
             {activeAnimation.type === 'pass_go' && (
               <div className="relative flex flex-col items-center">
-                {/* Floating Coins Rain */}
                 {Array.from({ length: 8 }).map((_, i) => (
                   <motion.div
                     key={i}

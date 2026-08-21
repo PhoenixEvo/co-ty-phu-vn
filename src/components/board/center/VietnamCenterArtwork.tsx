@@ -2,7 +2,8 @@
 
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Sparkles } from 'lucide-react';
+import { Sparkles, Coins } from 'lucide-react';
+import { formatMoney } from '@/utils/format';
 
 interface VietnamCenterArtworkProps {
   lastCenterBanner?: {
@@ -10,17 +11,18 @@ interface VietnamCenterArtworkProps {
     text: string;
     type: string;
   } | null;
+  jackpotPool?: number;
 }
 
-export default function VietnamCenterArtwork({ lastCenterBanner }: VietnamCenterArtworkProps) {
+export default function VietnamCenterArtwork({ lastCenterBanner, jackpotPool = 1_000_000 }: VietnamCenterArtworkProps) {
   return (
     <div className="w-full h-full bg-linear-to-b from-[#0e2a22] via-[#12382e] to-[#0a1f19] flex flex-col items-center justify-center relative overflow-hidden p-2 md:p-4 border border-amber-900/40 shadow-inner select-none">
       
-      {/* 1. Real Authentic High-Res Panoramic Scenery Layer (Ha Long Karsts, Terraces, River Sunset) */}
+      {/* 1. Real Authentic High-Res Panoramic Scenery Layer */}
       <div 
         className="absolute inset-0 w-full h-full bg-cover bg-center pointer-events-none opacity-45 mix-blend-screen transition-opacity duration-1000"
         style={{
-          backgroundImage: `url('https://images.unsplash.com/photo-1528127269322-539801943592?q=80&w=1600&auto=format&fit=crop')`, // Iconic panoramic Ha Long Bay karst islands & emerald waters
+          backgroundImage: `url('https://images.unsplash.com/photo-1528127269322-539801943592?q=80&w=1600&auto=format&fit=crop')`,
           filter: 'contrast(1.15) saturate(1.2) brightness(0.9)'
         }}
       />
@@ -52,58 +54,19 @@ export default function VietnamCenterArtwork({ lastCenterBanner }: VietnamCenter
         </svg>
       </motion.div>
 
-      {/* 4. Animated Gliding Chim Lạc (Traditional Vietnamese Flying Cranes) */}
+      {/* 4. Animated Gliding Chim Lạc */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        {/* Bird 1 */}
         <motion.div
-          animate={{
-            x: ['-20%', '120%'],
-            y: ['25%', '15%'],
-            scale: [0.7, 0.9, 0.7]
-          }}
-          transition={{
-            duration: 22,
-            repeat: Infinity,
-            ease: 'linear',
-            delay: 0
-          }}
+          animate={{ x: ['-20%', '120%'], y: ['25%', '15%'], scale: [0.7, 0.9, 0.7] }}
+          transition={{ duration: 22, repeat: Infinity, ease: 'linear' }}
           className="absolute text-amber-300/40 text-xl font-bold select-none drop-shadow"
         >
           🦅
         </motion.div>
-
-        {/* Bird 2 */}
         <motion.div
-          animate={{
-            x: ['-10%', '115%'],
-            y: ['40%', '30%'],
-            scale: [0.5, 0.65, 0.5]
-          }}
-          transition={{
-            duration: 28,
-            repeat: Infinity,
-            ease: 'linear',
-            delay: 8
-          }}
+          animate={{ x: ['-10%', '115%'], y: ['40%', '30%'], scale: [0.5, 0.65, 0.5] }}
+          transition={{ duration: 28, repeat: Infinity, ease: 'linear', delay: 8 }}
           className="absolute text-amber-300/30 text-lg font-bold select-none drop-shadow"
-        >
-          🦅
-        </motion.div>
-
-        {/* Bird 3 */}
-        <motion.div
-          animate={{
-            x: ['-15%', '110%'],
-            y: ['65%', '55%'],
-            scale: [0.6, 0.8, 0.6]
-          }}
-          transition={{
-            duration: 25,
-            repeat: Infinity,
-            ease: 'linear',
-            delay: 15
-          }}
-          className="absolute text-amber-300/35 text-lg font-bold select-none drop-shadow"
         >
           🦅
         </motion.div>
@@ -116,7 +79,6 @@ export default function VietnamCenterArtwork({ lastCenterBanner }: VietnamCenter
           { x: '75%', y: '25%', delay: 1.2 },
           { x: '35%', y: '70%', delay: 2.1 },
           { x: '80%', y: '65%', delay: 0.8 },
-          { x: '50%', y: '85%', delay: 1.7 },
         ].map((p, i) => (
           <motion.div
             key={i}
@@ -163,10 +125,26 @@ export default function VietnamCenterArtwork({ lastCenterBanner }: VietnamCenter
         </h1>
         
         {/* Lacquer Badge */}
-        <div className="inline-flex items-center gap-1.5 bg-linear-to-r from-red-700 via-rose-600 to-red-800 text-amber-200 font-black text-[9px] md:text-xs lg:text-sm px-3.5 py-1 rounded-full uppercase tracking-wider shadow-xl mt-1.5 border border-amber-400/70">
+        <div className="inline-flex items-center gap-1.5 bg-linear-to-r from-red-700 via-rose-600 to-red-800 text-amber-200 font-black text-[9px] md:text-xs lg:text-sm px-3.5 py-0.5 md:py-1 rounded-full uppercase tracking-wider shadow-xl mt-1 border border-amber-400/70">
           <span>Phiên Bản Đô Thị & Danh Lam</span>
           <span className="text-xs md:text-sm leading-none">🇻🇳</span>
         </div>
+
+        {/* 🎰 Free Parking Live Jackpot Pool Ticker */}
+        <motion.div 
+          animate={{ scale: [1, 1.03, 1] }}
+          transition={{ duration: 2.5, repeat: Infinity, ease: 'easeInOut' }}
+          className="mt-2.5 inline-flex items-center gap-2 bg-slate-950/85 backdrop-blur-md px-3.5 py-1 rounded-full border border-amber-400/80 shadow-xl"
+          style={{
+            boxShadow: '0 0 15px rgba(245, 158, 11, 0.35)'
+          }}
+        >
+          <span className="text-sm md:text-base leading-none">🎰</span>
+          <span className="text-[10px] md:text-xs font-bold text-amber-300 uppercase tracking-wider">Hũ Jackpot:</span>
+          <span className="font-mono font-black text-xs md:text-sm text-yellow-300 tracking-wide">
+            {formatMoney(jackpotPool)}
+          </span>
+        </motion.div>
       </div>
 
       {/* 7. Central Live Event Banner Overlay */}

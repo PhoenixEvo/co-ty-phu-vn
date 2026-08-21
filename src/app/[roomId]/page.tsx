@@ -15,10 +15,12 @@ import InviteModal from '@/components/modals/InviteModal';
 import SettingsModal from '@/components/modals/SettingsModal';
 import RulesModal from '@/components/modals/RulesModal';
 import TradeModal from '@/components/modals/TradeModal';
+import AuctionModal from '@/components/modals/AuctionModal';
 import LocationLandingReveal from '@/components/board/LocationLandingReveal';
 import VietnameseGameTable from '@/components/board/VietnameseGameTable';
 import ActionCelebrationOverlay from '@/components/board/ActionCelebrationOverlay';
 import QuickReactions from '@/components/reactions/QuickReactions';
+import QuickChatPhrases from '@/components/reactions/QuickChatPhrases';
 import { BOARD_SPACES } from '@/game/boardConfig';
 import { validateLocationArtworkRegistry } from '@/game/locationArtworks';
 import { usePlayerMovement } from '@/hooks/usePlayerMovement';
@@ -269,7 +271,7 @@ export default function RoomPage() {
   // ================= 2. ACTIVE GAMEPLAY =================
   return (
     <div className="min-h-screen bg-slate-950 text-white flex flex-col overflow-hidden select-none">
-      {/* Action Event Celebration Animations (Payday Coins Rain, Double Roll Fire, Jail Slam, Upgrades) */}
+      {/* Action Event Celebration Animations (Payday Coins Rain, Double Roll Fire, Jail Slam, Upgrades, Jackpots) */}
       <ActionCelebrationOverlay state={gameState} />
 
       {/* Header */}
@@ -300,14 +302,17 @@ export default function RoomPage() {
         {/* Right: Information-Dense Supporting Sidebar (Hidden in Focus Mode) */}
         {!isFocusMode && (
           <aside className="w-full md:w-72 lg:w-80 flex flex-col gap-2 shrink-0 overflow-y-auto pr-0.5 max-h-full">
-            {/* Quick Reactions Bar */}
-            <div className="flex items-center justify-between bg-slate-900/90 border border-slate-800 p-2 rounded-2xl">
-              <QuickReactions state={gameState} playerId={playerId} dispatch={dispatch} />
+            {/* Quick Actions & Social Dock (Reactions + Quick Chat + Trade) */}
+            <div className="flex items-center justify-between gap-1.5 bg-slate-900/90 border border-slate-800 p-2 rounded-2xl">
+              <div className="flex items-center gap-1.5">
+                <QuickReactions state={gameState} playerId={playerId} dispatch={dispatch} />
+                <QuickChatPhrases state={gameState} playerId={playerId} dispatch={dispatch} />
+              </div>
               <button
                 onClick={() => setIsTradeOpen(true)}
-                className="text-xs font-bold bg-amber-400/20 hover:bg-amber-400/30 text-amber-300 px-3 py-2 rounded-xl border border-amber-400/40 flex items-center gap-1.5 transition cursor-pointer shadow-xs active:scale-95"
+                className="text-xs font-bold bg-amber-400/20 hover:bg-amber-400/30 text-amber-300 px-3 py-2.5 rounded-xl border border-amber-400/40 flex items-center gap-1 transition cursor-pointer shadow-xs active:scale-95 shrink-0"
               >
-                <Handshake size={15} />
+                <Handshake size={14} />
                 <span>Đổi Đất</span>
               </button>
             </div>
@@ -386,15 +391,22 @@ export default function RoomPage() {
         dispatch={dispatch}
       />
 
-      {/* 3. Game Over Modal */}
+      {/* 3. Live Property Auction Modal */}
+      <AuctionModal 
+        state={gameState}
+        playerId={playerId}
+        dispatch={dispatch}
+      />
+
+      {/* 4. Game Over Modal with MVP Awards */}
       <GameOverModal state={gameState} dispatch={dispatch} playerId={playerId} />
 
-      {/* 4. Invite Friends Modal */}
+      {/* 5. Invite Friends Modal */}
       {isInviteOpen && (
         <InviteModal roomId={roomId} onClose={() => setIsInviteOpen(false)} />
       )}
 
-      {/* 5. Settings Modal */}
+      {/* 6. Settings Modal */}
       {isSettingsOpen && (
         <SettingsModal 
           onClose={() => setIsSettingsOpen(false)}
@@ -403,7 +415,7 @@ export default function RoomPage() {
         />
       )}
 
-      {/* 6. Rules Guide Modal */}
+      {/* 7. Rules Guide Modal */}
       {isRulesOpen && (
         <RulesModal onClose={() => setIsRulesOpen(false)} />
       )}
