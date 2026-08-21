@@ -24,9 +24,11 @@ const COLOR_MAP: Record<PropertySpace['colorGroup'], string> = {
   'dark-blue': 'bg-blue-800',
 };
 
-// High-contrast, vibrant Building Indicator for Houses and Hotels
+// High-contrast, color-coded Building Indicator for Houses and Hotels matching Owner's Token Color
 function BuildingIndicator({ houseCount, owner, isMortgaged }: { houseCount: number; owner: Player | null | undefined; isMortgaged?: boolean }) {
   if (!owner) return null;
+
+  const ownerColor = owner.tokenColor || '#ef4444';
 
   if (isMortgaged) {
     // Mortgaged Badge
@@ -41,27 +43,49 @@ function BuildingIndicator({ houseCount, owner, isMortgaged }: { houseCount: num
   }
 
   if (houseCount === 5) {
-    // Hotel: Luxury Red-Gold Badge with Hotel Icon
+    // Hotel: Royal Red-Gold Luxury Badge with Owner Color Accent Ring
     return (
       <div className="flex items-center justify-center z-10 animate-in zoom-in-50 duration-200">
-        <div className="bg-linear-to-r from-red-600 to-rose-700 text-amber-300 font-black text-[8px] md:text-[9.5px] px-1 py-0.5 rounded-md shadow-md border border-amber-300 flex items-center gap-0.5 leading-none">
-          <span className="text-[10px] md:text-xs leading-none">🏨</span>
-          <span className="font-mono text-[7px] md:text-[8px] font-black text-amber-200">KS</span>
+        <div 
+          className="text-amber-200 font-black text-[8px] md:text-[9.5px] px-1.5 py-0.5 rounded-md shadow-lg flex items-center gap-0.5 leading-none"
+          style={{
+            background: `linear-gradient(135deg, #b91c1c 0%, #7f1d1d 60%, ${ownerColor} 100%)`,
+            border: `1.5px solid #fde047`,
+            boxShadow: `0 0 10px ${ownerColor}80`
+          }}
+        >
+          <span className="text-[10px] md:text-xs leading-none filter drop-shadow">🏨</span>
+          <span className="font-mono text-[7px] md:text-[8px] font-black text-yellow-300">KS</span>
         </div>
       </div>
     );
   }
 
   if (houseCount >= 1 && houseCount <= 4) {
-    // High-clarity Green House Badge: Never gets clipped on narrow vertical strips!
+    // 1 - 4 Houses: Color-Coded to Owner's Token Color with 3D Pop
     return (
       <div className="flex items-center justify-center z-10 animate-in zoom-in-50 duration-200">
-        <div className="bg-slate-950/90 text-emerald-300 font-black text-[8px] md:text-[9.5px] px-1 py-0.5 rounded-md shadow-md border border-emerald-400/90 flex items-center gap-0.5 leading-none">
-          <span className="text-[9px] md:text-[10.5px] leading-none">🏠</span>
-          {houseCount > 1 && (
-            <span className="font-mono text-[7.5px] md:text-[8.5px] font-black text-emerald-200">
+        <div 
+          className="text-white font-black text-[8px] md:text-[9.5px] px-1.5 py-0.5 rounded-md shadow-md flex items-center gap-0.5 leading-none border"
+          style={{
+            backgroundColor: '#090d16',
+            borderColor: ownerColor,
+            boxShadow: `0 0 8px ${ownerColor}70`
+          }}
+        >
+          <span className="text-[9px] md:text-[10.5px] leading-none filter drop-shadow">🏠</span>
+          {houseCount > 1 ? (
+            <span 
+              className="font-mono text-[7.5px] md:text-[8.5px] font-black"
+              style={{ color: ownerColor }}
+            >
               x{houseCount}
             </span>
+          ) : (
+            <span 
+              className="w-1.5 h-1.5 rounded-full" 
+              style={{ backgroundColor: ownerColor }}
+            />
           )}
         </div>
       </div>
@@ -72,7 +96,7 @@ function BuildingIndicator({ houseCount, owner, isMortgaged }: { houseCount: num
   return (
     <div 
       className="w-3 h-3 md:w-3.5 md:h-3.5 rounded-full border-2 border-white shadow-md flex items-center justify-center text-[7px] md:text-[8px] text-white font-black"
-      style={{ backgroundColor: owner.tokenColor }}
+      style={{ backgroundColor: ownerColor }}
       title={`Chủ: ${owner.nickname}`}
     >
       {owner.nickname.charAt(0).toUpperCase()}

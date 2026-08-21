@@ -1,11 +1,11 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { GameState, Player } from '@/game/types';
 import Dice3D from '../ui/Dice3D';
 import { sounds } from '@/utils/sound';
 import { formatMoney } from '@/utils/format';
-import { Dices, Sparkles, Clock, Footprints, ShieldAlert, KeyRound } from 'lucide-react';
+import { Dices, Sparkles, Clock, Footprints, ShieldAlert, KeyRound, Timer } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 interface CurrentTurnPanelProps {
@@ -15,11 +15,47 @@ interface CurrentTurnPanelProps {
   isMoving?: boolean;
 }
 
+const TURN_TIME_LIMIT = 45; // 45 seconds per turn
+
 export default function CurrentTurnPanel({ state, playerId, dispatch, isMoving = false }: CurrentTurnPanelProps) {
   const [isRollingAnimation, setIsRollingAnimation] = useState(false);
+  const [timeLeft, setTimeLeft] = useState(TURN_TIME_LIMIT);
+
   const currentPlayerId = state.playerOrder[state.currentPlayerIndex];
   const currentPlayer = state.players.find(p => p.id === currentPlayerId);
   const isMyTurn = currentPlayerId === playerId;
+
+  // Turn Timer countdown
+  useEffect(() => {
+    setTimeLeft(TURN_TIME_LIMIT);
+
+    if (state.status !== 'playing' || isMoving || state.turnState === 'GAME_OVER') return;
+
+    const timer = setInterval(() => {
+      setTimeLeft(prev => {
+        if (prev <= 1) {
+          // Auto action on timeout if it's my turn
+          if (isMyTurn) {
+            if (state.turnState === 'AWAITING_ROLL') {
+              dispatch({ type: 'ROLL_DICE' });
+            } else if (state.turnState === 'AWAITING_ACTION') {
+              if (state.awaitingAction?.type === 'buy_property') {
+                dispatch({ type: 'SKIP_BUY' });
+              } else if (state.awaitingAction?.type === 'upgrade_property') {
+                dispatch({ type: 'SKIP_UPGRADE' });
+              } else if (state.awaitingAction?.type === 'card_dismiss') {
+                dispatch({ type: 'DISMISS_CARD' });
+              }
+            }
+          }
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, [state.currentPlayerIndex, state.turnState, isMyTurn, isMoving, state.status]);
 
   const handleRollDice = () => {
     if (!isMyTurn || state.turnState !== 'AWAITING_ROLL' || isMoving) return;
@@ -41,6 +77,9 @@ export default function CurrentTurnPanel({ state, playerId, dispatch, isMoving =
 
   if (!currentPlayer) return null;
 
+  const timerPercent = (timeLeft / TURN_TIME_LIMIT) * 100;
+  const isTimeCritical = timeLeft <= 10;
+
   return (
     <div className={`p-4 rounded-2xl shadow-2xl border-2 transition-all ${
       isMyTurn 
@@ -48,7 +87,7 @@ export default function CurrentTurnPanel({ state, playerId, dispatch, isMoving =
         : 'bg-slate-900/90 border-slate-800'
     }`}>
       {/* Header Banner */}
-      <div className="flex items-center justify-between pb-3 border-b border-slate-800/80">
+      <div className="flex items-center justify-between pb-2 border-b border-slate-800/80">
         <div className="flex items-center gap-2">
           {isMoving ? (
             <span className="font-black text-amber-400 text-sm tracking-wider uppercase flex items-center gap-1.5 animate-pulse">
@@ -81,6 +120,31 @@ export default function CurrentTurnPanel({ state, playerId, dispatch, isMoving =
           </span>
         </div>
       </div>
+
+      {/* Turn Timer Progress Bar (45s) */}
+      {state.status === 'playing' && (
+        <div className="my-2 space-y-1">
+          <div className="flex justify-between items-center text-[10px] font-bold text-slate-400">
+            <span className="flex items-center gap-1">
+              <Timer size={11} className={isTimeCritical ? 'text-red-400 animate-spin' : ''} />
+              Thời gian lượt:
+            </span>
+            <span className={`font-mono font-black ${
+              isTimeCritical ? 'text-red-400 animate-pulse text-xs' : timeLeft <= 20 ? 'text-amber-400' : 'text-emerald-400'
+            }`}>
+              {timeLeft}s
+            </span>
+          </div>
+          <div className="w-full h-1.5 bg-slate-800 rounded-full overflow-hidden">
+            <motion.div
+              className={`h-full transition-all duration-300 ${
+                isTimeCritical ? 'bg-red-500' : timeLeft <= 20 ? 'bg-amber-400' : 'bg-emerald-500'
+              }`}
+              style={{ width: `${timerPercent}%` }}
+            />
+          </div>
+        </div>
+      )}
 
       {/* Jail Banner if in Jail */}
       {currentPlayer.inJail && (

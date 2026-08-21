@@ -2,6 +2,8 @@
 class SoundEngine {
   private ctx: AudioContext | null = null;
   public enabled: boolean = true;
+  public bgmEnabled: boolean = false;
+  private bgmInterval: any = null;
 
   private getContext(): AudioContext | null {
     if (!this.enabled || typeof window === 'undefined') return null;
@@ -122,6 +124,52 @@ class SoundEngine {
     gain.connect(ctx.destination);
     osc.start();
     osc.stop(ctx.currentTime + 0.18);
+  }
+
+  // Vietnamese Pentatonic Folk Acoustic BGM Generator (Đàn Tranh / Đàn Bầu acoustic ambiance)
+  toggleBgm(): boolean {
+    this.bgmEnabled = !this.bgmEnabled;
+    if (this.bgmEnabled) {
+      this.startBgm();
+    } else {
+      this.stopBgm();
+    }
+    return this.bgmEnabled;
+  }
+
+  private startBgm() {
+    this.stopBgm();
+    const melody = [523.25, 659.25, 783.99, 880, 1046.50, 880, 783.99, 659.25, 587.33, 523.25, 392.00, 523.25];
+    let noteIdx = 0;
+
+    this.bgmInterval = setInterval(() => {
+      if (!this.bgmEnabled) return;
+      const ctx = this.getContext();
+      if (!ctx) return;
+
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'triangle';
+      
+      const freq = melody[noteIdx % melody.length];
+      osc.frequency.setValueAtTime(freq, ctx.currentTime);
+      gain.gain.setValueAtTime(0.04, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.45);
+
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start();
+      osc.stop(ctx.currentTime + 0.45);
+
+      noteIdx++;
+    }, 450);
+  }
+
+  private stopBgm() {
+    if (this.bgmInterval) {
+      clearInterval(this.bgmInterval);
+      this.bgmInterval = null;
+    }
   }
 }
 

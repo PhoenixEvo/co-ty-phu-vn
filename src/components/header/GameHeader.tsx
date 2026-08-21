@@ -1,7 +1,8 @@
 'use client';
 
 import { useState } from 'react';
-import { Share2, Settings, Copy, Check, Maximize2, Minimize2 } from 'lucide-react';
+import { Share2, Settings, Copy, Check, Maximize2, Minimize2, Music, Music2 } from 'lucide-react';
+import { sounds } from '@/utils/sound';
 
 interface GameHeaderProps {
   roomId: string;
@@ -21,11 +22,17 @@ export default function GameHeader({
   onOpenSettings 
 }: GameHeaderProps) {
   const [copied, setCopied] = useState(false);
+  const [isBgmPlaying, setIsBgmPlaying] = useState(false);
 
   const handleCopyCode = () => {
     navigator.clipboard.writeText(roomId);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
+  };
+
+  const handleToggleBgm = () => {
+    const isNowPlaying = sounds.toggleBgm();
+    setIsBgmPlaying(isNowPlaying);
   };
 
   return (
@@ -49,7 +56,7 @@ export default function GameHeader({
         <span className="font-mono font-black text-xs md:text-sm tracking-widest text-amber-400">{roomId}</span>
         <button
           onClick={handleCopyCode}
-          className="ml-0.5 p-1 hover:bg-slate-700 rounded text-slate-300 hover:text-white transition active:scale-90"
+          className="ml-0.5 p-1 hover:bg-slate-700 rounded text-slate-300 hover:text-white transition active:scale-90 cursor-pointer"
           title="Sao chép mã phòng"
         >
           {copied ? <Check size={13} className="text-emerald-400" /> : <Copy size={13} />}
@@ -58,6 +65,20 @@ export default function GameHeader({
 
       {/* Right: Actions */}
       <div className="flex items-center gap-1.5 md:gap-2">
+        {/* BGM Toggle Button */}
+        <button
+          onClick={handleToggleBgm}
+          className={`flex items-center gap-1 text-xs font-bold px-2.5 py-1.5 rounded-xl border transition active:scale-95 cursor-pointer ${
+            isBgmPlaying 
+              ? 'bg-emerald-600 text-white border-emerald-400 shadow-md shadow-emerald-600/30' 
+              : 'bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white border-slate-700'
+          }`}
+          title={isBgmPlaying ? 'Tắt nhạc nền' : 'Bật nhạc nền dân gian'}
+        >
+          {isBgmPlaying ? <Music size={14} className="animate-bounce text-amber-300" /> : <Music2 size={14} />}
+          <span className="hidden lg:inline">{isBgmPlaying ? 'Nhạc: Bật' : 'Nhạc'}</span>
+        </button>
+
         {/* Connected indicator */}
         <div className="hidden sm:flex items-center gap-1.5 text-xs text-emerald-400 bg-emerald-950/50 border border-emerald-800/40 px-2.5 py-1 rounded-full">
           <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
@@ -68,7 +89,7 @@ export default function GameHeader({
         {onToggleFocusMode && (
           <button
             onClick={onToggleFocusMode}
-            className={`flex items-center gap-1 text-xs font-bold px-2.5 py-1.5 rounded-xl border transition active:scale-95 ${
+            className={`flex items-center gap-1 text-xs font-bold px-2.5 py-1.5 rounded-xl border transition active:scale-95 cursor-pointer ${
               isFocusMode 
                 ? 'bg-amber-500 text-slate-950 border-amber-400 shadow-amber-500/20' 
                 : 'bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white border-slate-700'
@@ -83,7 +104,7 @@ export default function GameHeader({
         {/* Invite Button */}
         <button
           onClick={onOpenInvite}
-          className="flex items-center gap-1.5 text-xs font-bold bg-blue-600 hover:bg-blue-500 text-white px-2.5 md:px-3 py-1.5 rounded-xl transition shadow-sm active:scale-95"
+          className="flex items-center gap-1.5 text-xs font-bold bg-blue-600 hover:bg-blue-500 text-white px-2.5 md:px-3 py-1.5 rounded-xl transition shadow-sm active:scale-95 cursor-pointer"
         >
           <Share2 size={14} />
           <span className="hidden sm:inline">Mời bạn</span>
@@ -92,7 +113,7 @@ export default function GameHeader({
         {/* Settings Button */}
         <button
           onClick={onOpenSettings}
-          className="p-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white rounded-xl border border-slate-700 transition active:scale-95"
+          className="p-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white rounded-xl border border-slate-700 transition active:scale-95 cursor-pointer"
           title="Cài đặt"
         >
           <Settings size={15} />

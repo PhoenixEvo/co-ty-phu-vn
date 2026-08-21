@@ -83,7 +83,7 @@ export interface GameEvent {
   id: string;
   timestamp: number;
   message: string;
-  type?: 'roll' | 'buy' | 'upgrade' | 'mortgage' | 'unmortgage' | 'rent' | 'tax' | 'card' | 'jail' | 'pass_go' | 'bankrupt';
+  type?: 'roll' | 'buy' | 'upgrade' | 'mortgage' | 'unmortgage' | 'rent' | 'tax' | 'card' | 'jail' | 'pass_go' | 'bankrupt' | 'trade';
   playerId?: string;
   amount?: number;
 }
@@ -97,6 +97,16 @@ export type TurnState =
   | 'AWAITING_ACTION'
   | 'TURN_COMPLETE'
   | 'GAME_OVER';
+
+export interface TradeOffer {
+  id: string;
+  fromPlayerId: string;
+  toPlayerId: string;
+  offeredSpaceIds: string[];
+  requestedSpaceIds: string[];
+  offeredMoney: number;
+  requestedMoney: number;
+}
 
 export interface GameState {
   roomId: string;
@@ -127,6 +137,13 @@ export interface GameState {
     amount?: number;
     creditorId?: string; // Player ID or 'bank'
   } | null;
+  activeTradeOffer?: TradeOffer | null;
+  lastReaction?: {
+    id: string;
+    playerId: string;
+    emoji: string;
+    timestamp: number;
+  } | null;
 }
 
 export type ClientAction =
@@ -144,6 +161,11 @@ export type ClientAction =
   | { type: 'PAY_TAX'; payload?: { percentage: boolean } }
   | { type: 'PAY_RENT' }
   | { type: 'DECLARE_BANKRUPTCY' }
+  | { type: 'PROPOSE_TRADE'; payload: Omit<TradeOffer, 'id'> }
+  | { type: 'ACCEPT_TRADE' }
+  | { type: 'REJECT_TRADE' }
+  | { type: 'CANCEL_TRADE' }
+  | { type: 'SEND_REACTION'; payload: { emoji: string } }
   | { type: 'DISMISS_CARD' }
   | { type: 'END_TURN' }
   | { type: 'LEAVE_GAME' };

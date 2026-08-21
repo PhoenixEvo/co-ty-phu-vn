@@ -1,27 +1,54 @@
 'use client';
 
 import { useState } from 'react';
-import { Player, GameState } from '@/game/types';
+import { Player, GameState, PropertySpace } from '@/game/types';
 import { BOARD_SPACES } from '@/game/boardConfig';
 import PlayerDetailModal from '../modals/PlayerDetailModal';
 import { formatMoney, formatMoneyCompact } from '@/utils/format';
-import { User, Home, Bus, ShieldAlert, Crown, ChevronRight } from 'lucide-react';
+import { User, Home, Bus, ShieldAlert, Crown, ChevronRight, Handshake, Sparkles, Award } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 interface PlayerCardsProps {
   state: GameState;
   playerId: string;
+  onOpenTrade?: () => void;
 }
 
-export default function PlayerCards({ state, playerId }: PlayerCardsProps) {
+const COLOR_GROUPS: PropertySpace['colorGroup'][] = [
+  'red', 'pink', 'teal', 'light-green', 'orange', 'yellow', 'cyan', 'dark-blue'
+];
+
+const GROUP_COLORS: Record<PropertySpace['colorGroup'], string> = {
+  'red': '#ef4444',
+  'pink': '#f472b6',
+  'teal': '#14b8a6',
+  'light-green': '#10b981',
+  'orange': '#f59e0b',
+  'yellow': '#eab308',
+  'cyan': '#06b6d4',
+  'dark-blue': '#1e40af',
+};
+
+export default function PlayerCards({ state, playerId, onOpenTrade }: PlayerCardsProps) {
   const [inspectingPlayer, setInspectingPlayer] = useState<Player | null>(null);
+
+  const getPlayerMonopolies = (pId: string) => {
+    const monopolies: PropertySpace['colorGroup'][] = [];
+    COLOR_GROUPS.forEach(group => {
+      const groupSpaces = BOARD_SPACES.filter(s => s.type === 'property' && (s as PropertySpace).colorGroup === group);
+      const owned = groupSpaces.filter(s => state.properties[s.id]?.ownerId === pId);
+      if (owned.length === groupSpaces.length && groupSpaces.length > 0) {
+        monopolies.push(group);
+      }
+    });
+    return monopolies;
+  };
 
   const getPlayerAssetsCount = (pId: string) => {
     const owned = BOARD_SPACES.filter(s => state.properties[s.id]?.ownerId === pId);
     const properties = owned.filter(s => s.type === 'property').length;
     const transports = owned.filter(s => s.type === 'transport').length;
     
-    // Count houses & hotels
     let houses = 0;
     let hotels = 0;
     owned.forEach(s => {
@@ -30,7 +57,9 @@ export default function PlayerCards({ state, playerId }: PlayerCardsProps) {
       else if (hCount >= 1 && hCount <= 4) houses += hCount;
     });
 
-    return { properties, transports, houses, hotels };
+    const monopolies = getPlayerMonopolies(pId);
+
+    return { properties, transports, houses, hotels, monopolies };
   };
 
   return (
@@ -38,8 +67,17 @@ export default function PlayerCards({ state, playerId }: PlayerCardsProps) {
       <div className="bg-slate-900/90 border border-slate-800 rounded-2xl p-3.5 shadow-xl space-y-2.5">
         <div className="flex items-center justify-between px-1">
           <span className="text-xs font-black uppercase tracking-wider text-slate-400">
-            Danh Sách Người Chơi ({state.players.length})
+            Người Chơi ({state.players.length}/5)
           </span>
+          {onOpenTrade && state.status === 'playing' && (
+            <button
+              onClick={onOpenTrade}
+              className="text-[11px] font-bold bg-amber-400/20 hover:bg-amber-400/30 text-amber-300 px-2.5 py-1 rounded-lg border border-amber-400/40 flex items-center gap-1 transition cursor-pointer shadow-xs active:scale-95"
+            >
+              <Handshake size={13} />
+              <span>Đổi Đất 🤝</span>
+            </button>
+          )}
         </div>
 
         <div className="space-y-2">
@@ -47,7 +85,7 @@ export default function PlayerCards({ state, playerId }: PlayerCardsProps) {
             const isCurrentTurn = p.id === state.playerOrder[state.currentPlayerIndex];
             const isMe = p.id === playerId;
             const isHost = index === 0;
-            const { properties, transports, houses, hotels } = getPlayerAssetsCount(p.id);
+            const { properties, transports, houses, hotels, monopolies } = getPlayerAssetsCount(p.id);
 
             return (
               <motion.div
@@ -113,6 +151,24 @@ export default function PlayerCards({ state, playerId }: PlayerCardsProps) {
                           🚌 {transports}
                         </span>
                       </div>
+
+                      {/* Monopoly Badges */}
+                      {monopolies.length > 0 && (
+                        <div className="flex items-center gap-1 mt-1 flex-wrap">
+                          <span className="text-[9px] font-black text-amber-300 bg-amber-950/80 px-1.5 py-0.2 rounded border border-amber-500/50 flex items-center gap-0.5">
+                            <Award size={10} className="text-amber-400" />
+                            <span>Độc Quyền x{monopolies.length} (x2 Thuê)</span>
+                          </span>
+                          {monopolies.map(m => (
+                            <span 
+                              key={m} 
+                              className="w-2.5 h-2.5 rounded-full border border-white/60 shadow-xs inline-block" 
+                              style={{ backgroundColor: GROUP_COLORS[m] }}
+                              title={`Độc quyền nhóm màu ${m}`}
+                            />
+                          ))}
+                        </div>
+                      )}
                     </div>
                   </div>
 

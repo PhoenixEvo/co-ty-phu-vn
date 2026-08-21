@@ -4,9 +4,10 @@ import React from 'react';
 
 interface VietnameseGameTableProps {
   children: React.ReactNode;
+  isFocusMode?: boolean;
 }
 
-export default function VietnameseGameTable({ children }: VietnameseGameTableProps) {
+export default function VietnameseGameTable({ children, isFocusMode = false }: VietnameseGameTableProps) {
   return (
     <main className="flex-1 flex items-center justify-center overflow-hidden p-1.5 md:p-2.5 lg:p-3 relative rounded-2xl bg-linear-to-b from-[#143d30] via-[#0c271e] to-[#05140f] shadow-inner select-none h-full min-h-0">
       

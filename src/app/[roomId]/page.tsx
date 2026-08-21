@@ -14,12 +14,15 @@ import GameOverModal from '@/components/modals/GameOverModal';
 import InviteModal from '@/components/modals/InviteModal';
 import SettingsModal from '@/components/modals/SettingsModal';
 import RulesModal from '@/components/modals/RulesModal';
+import TradeModal from '@/components/modals/TradeModal';
 import LocationLandingReveal from '@/components/board/LocationLandingReveal';
 import VietnameseGameTable from '@/components/board/VietnameseGameTable';
+import ActionCelebrationOverlay from '@/components/board/ActionCelebrationOverlay';
+import QuickReactions from '@/components/reactions/QuickReactions';
 import { BOARD_SPACES } from '@/game/boardConfig';
 import { validateLocationArtworkRegistry } from '@/game/locationArtworks';
 import { usePlayerMovement } from '@/hooks/usePlayerMovement';
-import { Users, Crown, Sparkles, Copy, Check, Play, ShieldAlert } from 'lucide-react';
+import { Users, Crown, Sparkles, Copy, Check, Play, ShieldAlert, Handshake } from 'lucide-react';
 import { sounds } from '@/utils/sound';
 
 const TOKENS = [
@@ -43,6 +46,7 @@ export default function RoomPage() {
   const [isInviteOpen, setIsInviteOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isRulesOpen, setIsRulesOpen] = useState(false);
+  const [isTradeOpen, setIsTradeOpen] = useState(false);
   const [isFocusMode, setIsFocusMode] = useState(false);
   const [copiedLobby, setCopiedLobby] = useState(false);
 
@@ -104,7 +108,7 @@ export default function RoomPage() {
                   </span>
                   <button
                     onClick={handleCopyLobbyCode}
-                    className="p-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl transition active:scale-95"
+                    className="p-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl transition active:scale-95 cursor-pointer"
                     title="Sao chép mã"
                   >
                     {copiedLobby ? <Check size={16} className="text-emerald-400" /> : <Copy size={16} />}
@@ -221,54 +225,54 @@ export default function RoomPage() {
                 </button>
               </form>
             ) : (
-              <div className="text-center space-y-6">
-                <div 
-                  className="w-20 h-20 mx-auto rounded-full flex items-center justify-center text-3xl text-white font-black shadow-xl border-4 border-white/80"
-                  style={{ backgroundColor: me.tokenColor }}
-                >
-                  {me.nickname.charAt(0).toUpperCase()}
+              <div className="space-y-6 text-center">
+                <div className="w-16 h-16 rounded-full mx-auto flex items-center justify-center border-4 border-white shadow-xl" style={{ backgroundColor: me.tokenColor }}>
+                  <span className="text-2xl font-black text-white">{me.nickname.charAt(0).toUpperCase()}</span>
                 </div>
-                
+
                 <div>
-                  <h2 className="text-2xl font-black text-white">Bạn Đã Sẵn Sàng!</h2>
-                  <p className="text-slate-400 text-sm mt-1">
-                    {isHost ? 'Bạn là chủ phòng. Nhấn bắt đầu khi mọi người đã vào đủ.' : 'Đang chờ chủ phòng bắt đầu trận đấu...'}
-                  </p>
+                  <h3 className="text-2xl font-black text-white">Sẵn Sàng, {me.nickname}!</h3>
+                  <p className="text-xs text-slate-400 mt-1">Đang chờ các người chơi khác chuẩn bị...</p>
                 </div>
-                
-                {isHost && (
-                  <div className="space-y-2 pt-2">
-                    <button 
+
+                {isHost ? (
+                  <div className="space-y-3 pt-4">
+                    <button
                       onClick={() => {
                         sounds.playBuyProperty();
                         dispatch({ type: 'START_GAME' });
                       }}
                       disabled={gameState.players.length < 2}
-                      className="w-full bg-linear-to-r from-emerald-500 to-emerald-600 hover:from-emerald-400 hover:to-emerald-500 text-slate-950 font-black py-4 rounded-xl transition-all disabled:opacity-40 text-lg shadow-xl shadow-emerald-500/20 active:scale-98 flex items-center justify-center gap-2 cursor-pointer"
+                      className="w-full py-4 bg-linear-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 disabled:opacity-40 text-slate-950 font-black text-lg rounded-2xl shadow-xl transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-98"
                     >
-                      <Play size={20} className="fill-current" />
+                      <Play size={20} fill="currentColor" />
                       <span>BẮT ĐẦU TRÒ CHƠI</span>
                     </button>
                     {gameState.players.length < 2 && (
-                      <p className="text-xs text-amber-400/90 font-medium">
-                        Cần ít nhất 2 người chơi để bắt đầu bàn cờ.
-                      </p>
+                      <p className="text-xs text-amber-400 italic">Cần tối thiểu 2 người chơi để bắt đầu</p>
                     )}
+                  </div>
+                ) : (
+                  <div className="bg-slate-800/80 p-4 rounded-2xl border border-slate-700/60 text-xs text-slate-300">
+                    👑 Đang chờ Chủ phòng ({gameState.players[0]?.nickname}) bấm bắt đầu trận đấu...
                   </div>
                 )}
               </div>
             )}
           </div>
+
         </div>
       </div>
     );
   }
 
-  // ================= 2. ACTIVE GAMEPLAY LAYOUT =================
+  // ================= 2. ACTIVE GAMEPLAY =================
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col h-screen overflow-hidden select-none">
-      
-      {/* 1. Header */}
+    <div className="min-h-screen bg-slate-950 text-white flex flex-col overflow-hidden select-none">
+      {/* Action Event Celebration Animations (Payday Coins Rain, Double Roll Fire, Jail Slam, Upgrades) */}
+      <ActionCelebrationOverlay state={gameState} />
+
+      {/* Header */}
       <GameHeader 
         roomId={roomId} 
         connectedCount={gameState.players.filter(p => p.connected).length}
@@ -278,11 +282,10 @@ export default function RoomPage() {
         onOpenSettings={() => setIsSettingsOpen(true)}
       />
 
-      {/* 2. Main Game Viewport (Board-First Priority Layout) */}
-      <div className="flex-1 flex flex-col md:flex-row gap-2 md:gap-3 p-1.5 md:p-2.5 overflow-hidden bg-[#071912] relative">
-        
-        {/* Left / Center: Dominant Game Board Container (Vietnamese Game Table Aesthetic) */}
-        <VietnameseGameTable>
+      {/* Main Game Arena */}
+      <div className="flex-1 flex flex-col md:flex-row p-1.5 md:p-3 gap-2 md:gap-3 overflow-hidden items-center justify-center">
+        {/* Left / Center: Responsive 4:3 Physical Board with Dynamic Scenery */}
+        <VietnameseGameTable isFocusMode={isFocusMode}>
           <GameBoard 
             state={gameState} 
             playerId={playerId} 
@@ -297,7 +300,19 @@ export default function RoomPage() {
         {/* Right: Information-Dense Supporting Sidebar (Hidden in Focus Mode) */}
         {!isFocusMode && (
           <aside className="w-full md:w-72 lg:w-80 flex flex-col gap-2 shrink-0 overflow-y-auto pr-0.5 max-h-full">
-            {/* Current Turn Panel (Dice + Roll Button) */}
+            {/* Quick Reactions Bar */}
+            <div className="flex items-center justify-between bg-slate-900/90 border border-slate-800 p-2 rounded-2xl">
+              <QuickReactions state={gameState} playerId={playerId} dispatch={dispatch} />
+              <button
+                onClick={() => setIsTradeOpen(true)}
+                className="text-xs font-bold bg-amber-400/20 hover:bg-amber-400/30 text-amber-300 px-3 py-2 rounded-xl border border-amber-400/40 flex items-center gap-1.5 transition cursor-pointer shadow-xs active:scale-95"
+              >
+                <Handshake size={15} />
+                <span>Đổi Đất</span>
+              </button>
+            </div>
+
+            {/* Current Turn Panel (Dice + 45s Turn Timer + Roll Button) */}
             <CurrentTurnPanel 
               state={gameState} 
               playerId={playerId} 
@@ -313,8 +328,12 @@ export default function RoomPage() {
               isMoving={isMoving}
             />
 
-            {/* Players List */}
-            <PlayerCards state={gameState} playerId={playerId} />
+            {/* Players List with Monopoly Tracker */}
+            <PlayerCards 
+              state={gameState} 
+              playerId={playerId} 
+              onOpenTrade={() => setIsTradeOpen(true)}
+            />
 
             {/* Activity Feed */}
             <ActivityFeed events={gameState.events} state={gameState} />
@@ -349,7 +368,7 @@ export default function RoomPage() {
         />
       )}
 
-      {/* 1. Chance & Fortune Card Draw Modal (Only display after movement finishes) */}
+      {/* 1. Chance & Fortune Card Draw Modal */}
       {!isMoving && gameState.lastDrawnCard && gameState.turnState === 'AWAITING_ACTION' && gameState.awaitingAction?.type === 'card_dismiss' && (
         <CardDrawModal 
           card={gameState.lastDrawnCard} 
@@ -358,15 +377,24 @@ export default function RoomPage() {
         />
       )}
 
-      {/* 2. Game Over Modal */}
+      {/* 2. Trade / Deal Negotiation Modal */}
+      <TradeModal 
+        state={gameState}
+        playerId={playerId}
+        isOpen={isTradeOpen}
+        onClose={() => setIsTradeOpen(false)}
+        dispatch={dispatch}
+      />
+
+      {/* 3. Game Over Modal */}
       <GameOverModal state={gameState} dispatch={dispatch} playerId={playerId} />
 
-      {/* 3. Invite Friends Modal */}
+      {/* 4. Invite Friends Modal */}
       {isInviteOpen && (
         <InviteModal roomId={roomId} onClose={() => setIsInviteOpen(false)} />
       )}
 
-      {/* 4. Settings Modal */}
+      {/* 5. Settings Modal */}
       {isSettingsOpen && (
         <SettingsModal 
           onClose={() => setIsSettingsOpen(false)}
@@ -375,7 +403,7 @@ export default function RoomPage() {
         />
       )}
 
-      {/* 5. Rules Guide Modal */}
+      {/* 6. Rules Guide Modal */}
       {isRulesOpen && (
         <RulesModal onClose={() => setIsRulesOpen(false)} />
       )}
