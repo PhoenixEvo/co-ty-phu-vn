@@ -127,6 +127,66 @@ class SoundEngine {
     osc.stop(ctx.currentTime + 0.18);
   }
 
+  // Police siren sound when caught and sent to jail
+  playPoliceSiren() {
+    const ctx = this.getContext();
+    if (!ctx) return;
+
+    const now = ctx.currentTime;
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = 'sawtooth';
+
+    // 2-tone siren wail
+    osc.frequency.setValueAtTime(650, now);
+    osc.frequency.linearRampToValueAtTime(950, now + 0.25);
+    osc.frequency.linearRampToValueAtTime(650, now + 0.5);
+    osc.frequency.linearRampToValueAtTime(950, now + 0.75);
+    osc.frequency.linearRampToValueAtTime(600, now + 1.0);
+
+    gain.gain.setValueAtTime(0.12, now);
+    gain.gain.exponentialRampToValueAtTime(0.01, now + 1.1);
+
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.start(now);
+    osc.stop(now + 1.1);
+  }
+
+  // Heavy iron prison bars slamming sound
+  playJailSlam() {
+    const ctx = this.getContext();
+    if (!ctx) return;
+
+    const now = ctx.currentTime;
+
+    // 1. Low heavy impact thud
+    const oscLow = ctx.createOscillator();
+    const gainLow = ctx.createGain();
+    oscLow.type = 'sine';
+    oscLow.frequency.setValueAtTime(140, now);
+    oscLow.frequency.exponentialRampToValueAtTime(30, now + 0.4);
+    gainLow.gain.setValueAtTime(0.3, now);
+    gainLow.gain.exponentialRampToValueAtTime(0.001, now + 0.4);
+    oscLow.connect(gainLow);
+    gainLow.connect(ctx.destination);
+    oscLow.start(now);
+    oscLow.stop(now + 0.4);
+
+    // 2. High metallic iron gate clash
+    const oscMetal = ctx.createOscillator();
+    const gainMetal = ctx.createGain();
+    oscMetal.type = 'square';
+    oscMetal.frequency.setValueAtTime(520, now);
+    oscMetal.frequency.exponentialRampToValueAtTime(180, now + 0.3);
+    gainMetal.gain.setValueAtTime(0.15, now);
+    gainMetal.gain.exponentialRampToValueAtTime(0.001, now + 0.35);
+    oscMetal.connect(gainMetal);
+    gainMetal.connect(ctx.destination);
+    oscMetal.start(now);
+    oscMetal.stop(now + 0.35);
+  }
+
   // ================= AUTHENTIC VIETNAMESE FOLK BGM ENGINE =================
   toggleBgm(): boolean {
     this.bgmEnabled = !this.bgmEnabled;

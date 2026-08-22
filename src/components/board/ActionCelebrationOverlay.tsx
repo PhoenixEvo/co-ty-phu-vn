@@ -3,9 +3,10 @@
 import React, { useEffect, useState } from 'react';
 import { GameState, GameEvent } from '@/game/types';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Sparkles, Zap, Flame, ShieldAlert, Coins, Skull, Unlock, Lock, Trophy } from 'lucide-react';
+import { Sparkles, Zap, Flame, ShieldAlert, Coins, Skull, Unlock, Lock, Trophy, Siren } from 'lucide-react';
 import { formatMoney } from '@/utils/format';
 import { triggerHaptic } from '@/utils/haptics';
+import { sounds } from '@/utils/sound';
 
 interface ActionCelebrationOverlayProps {
   state: GameState;
@@ -54,14 +55,19 @@ export default function ActionCelebrationOverlay({ state }: ActionCelebrationOve
         subText: 'Bạn được tung tiếp một lượt nữa!'
       });
     }
-    // 3. Sent to Jail
+    // 3. Sent to Jail (Epic Prison Slam with Siren)
     else if (lastEvent.type === 'jail' && lastEvent.message.includes('vào tù')) {
       triggerHaptic('heavy');
+      sounds.playPoliceSiren();
+      setTimeout(() => {
+        sounds.playJailSlam();
+      }, 350);
+
       setActiveAnimation({
         id: lastEvent.id,
         type: 'jail',
-        text: '🚓 BỊ BẮT VÀO TÙ!',
-        subText: 'Hãy đổ xúc xắc đôi hoặc nộp 500K để ra tù'
+        text: '🚓 BỊ BẮT VÀO TRẠI GIAM!',
+        subText: 'Đổ xúc xắc Đôi hoặc nộp phạt 500.000 ₫ để được bảo lãnh'
       });
     }
     // 4. Bail out of Jail
@@ -95,9 +101,10 @@ export default function ActionCelebrationOverlay({ state }: ActionCelebrationOve
       });
     }
 
+    const duration = lastEvent.type === 'jail' ? 3200 : 2500;
     const timer = setTimeout(() => {
       setActiveAnimation(null);
-    }, 2500);
+    }, duration);
 
     return () => clearTimeout(timer);
   }, [lastEvent?.id]);
@@ -112,7 +119,7 @@ export default function ActionCelebrationOverlay({ state }: ActionCelebrationOve
             animate={{ scale: 1, opacity: 1, y: 0 }}
             exit={{ scale: 0.8, opacity: 0, y: 20 }}
             transition={{ type: 'spring', damping: 14, stiffness: 180 }}
-            className="flex flex-col items-center justify-center p-4 max-w-sm text-center"
+            className="flex flex-col items-center justify-center p-4 max-w-md w-full text-center"
           >
             {/* 0. JACKPOT WON: Grand Fireworks & Golden Rain */}
             {activeAnimation.type === 'jackpot' && (
@@ -175,12 +182,52 @@ export default function ActionCelebrationOverlay({ state }: ActionCelebrationOve
               </div>
             )}
 
-            {/* 3. JAIL: Iron Bars Slam */}
+            {/* 3. JAIL: EPIC PRISON BARS SLAM & POLICE SIREN */}
             {activeAnimation.type === 'jail' && (
-              <div className="bg-slate-950 text-red-400 p-4 rounded-3xl shadow-2xl border-2 border-red-600 flex flex-col items-center">
-                <div className="text-4xl mb-1 animate-pulse">⛓️🚓</div>
-                <h3 className="font-black text-xl tracking-tight text-white">{activeAnimation.text}</h3>
-                <p className="text-xs text-red-300 mt-1">{activeAnimation.subText}</p>
+              <div className="relative flex flex-col items-center w-full">
+                {/* Flashing Police Red & Blue Strobe Light Backdrop */}
+                <motion.div
+                  animate={{ opacity: [0.3, 0.8, 0.3] }}
+                  transition={{ duration: 0.35, repeat: Infinity }}
+                  className="absolute -inset-10 bg-linear-to-r from-red-600/50 via-transparent to-blue-600/50 rounded-full blur-2xl pointer-events-none"
+                />
+
+                <motion.div
+                  initial={{ y: -80, scaleY: 0.2 }}
+                  animate={{ y: 0, scaleY: 1 }}
+                  transition={{ type: 'spring', damping: 10, stiffness: 220 }}
+                  className="bg-slate-950/95 text-red-400 p-5 rounded-3xl shadow-2xl border-3 border-red-600 flex flex-col items-center relative overflow-hidden backdrop-blur-md w-full"
+                  style={{
+                    boxShadow: '0 0 50px rgba(220, 38, 38, 0.6), inset 0 0 20px rgba(0,0,0,0.9)'
+                  }}
+                >
+                  {/* Heavy Iron Prison Bars Graphic Over Box */}
+                  <div className="flex justify-between w-full px-4 mb-2 gap-3 opacity-80">
+                    {Array.from({ length: 9 }).map((_, i) => (
+                      <motion.div
+                        key={i}
+                        initial={{ y: -60 }}
+                        animate={{ y: 0 }}
+                        transition={{ delay: i * 0.03, type: 'spring', damping: 8 }}
+                        className="w-2.5 h-14 bg-linear-to-b from-slate-400 via-slate-600 to-slate-800 rounded-full border-r border-slate-300 shadow-md"
+                      />
+                    ))}
+                  </div>
+
+                  {/* Siren & Padlock Badge */}
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="text-3xl animate-bounce">🚨</span>
+                    <span className="text-4xl animate-pulse">⛓️🔒</span>
+                    <span className="text-3xl animate-bounce">🚓</span>
+                  </div>
+
+                  <h3 className="font-black text-xl md:text-2xl tracking-tight text-white uppercase drop-shadow-md">
+                    {activeAnimation.text}
+                  </h3>
+                  <p className="text-xs md:text-sm text-red-300 mt-1 font-semibold max-w-xs leading-snug">
+                    {activeAnimation.subText}
+                  </p>
+                </motion.div>
               </div>
             )}
 
