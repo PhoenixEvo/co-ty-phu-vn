@@ -76,6 +76,18 @@ function setCenterBanner(state: GameState, text: string, type: NonNullable<GameS
   };
 }
 
+// Release all properties of a bankrupt player back to the Bank (Option 2 Fair Foreclosure)
+function releasePlayerProperties(state: GameState, playerId: string): number {
+  let releasedCount = 0;
+  Object.entries(state.properties).forEach(([sId, o]) => {
+    if (o.ownerId === playerId) {
+      delete state.properties[sId];
+      releasedCount++;
+    }
+  });
+  return releasedCount;
+}
+
 // Check if owner owns all properties in a color group
 function hasFullColorSet(state: GameState, ownerId: string, colorGroup: PropertySpace['colorGroup']): boolean {
   const groupProperties = BOARD_SPACES.filter(
@@ -623,29 +635,23 @@ export function gameReducer(state: GameState, action: ClientAction, playerId: st
       player.isBankrupt = true;
       const creditorId = draft.awaitingAction?.creditorId;
 
+      // 1. Transfer any remaining cash to creditor (if another player)
       if (creditorId && creditorId !== 'bank') {
         const creditor = draft.players.find(p => p.id === creditorId);
         if (creditor) {
-          if (player.money > 0) creditor.money += player.money;
-          player.money = 0;
-
-          Object.entries(draft.properties).forEach(([sId, o]) => {
-            if (o.ownerId === player.id) {
-              o.ownerId = creditor.id;
-            }
-          });
-          logEvent(draft, `💀 ${player.nickname} đã tuyên bố phá sản! Toàn bộ tài sản được chuyển cho ${creditor.nickname}.`, 'bankrupt', playerId);
-        }
-      } else {
-        Object.entries(draft.properties).forEach(([sId, o]) => {
-          if (o.ownerId === player.id) {
-            delete draft.properties[sId];
+          if (player.money > 0) {
+            creditor.money += player.money;
+            logEvent(draft, `${creditor.nickname} nhận lại ${formatMoney(player.money)} tiền mặt còn lại từ ${player.nickname}.`, 'rent');
           }
-        });
-        logEvent(draft, `💀 ${player.nickname} đã tuyên bố phá sản trước ngân hàng!`, 'bankrupt', playerId);
+        }
       }
+      player.money = 0;
 
-      setCenterBanner(draft, `💀 ${player.nickname} ĐÃ PHÁ SẢN!`, 'tax');
+      // 2. Fair Economy (Option 2): Release all properties back to the Bank so all remaining players have a fair chance
+      const releasedCount = releasePlayerProperties(draft, player.id);
+
+      logEvent(draft, `💀 ${player.nickname} đã tuyên bố phá sản! Toàn bộ ${releasedCount} ô đất đã được giải phóng về Ngân Hàng để mọi người mua lại.`, 'bankrupt', playerId);
+      setCenterBanner(draft, `💀 ${player.nickname} PHÁ SẢN! ĐẤT ĐÃ ĐƯỢC GIẢI PHÓNG`, 'tax');
       draft.awaitingAction = null;
       nextPlayer(draft);
       return draft;
@@ -794,7 +800,8 @@ export function gameReducer(state: GameState, action: ClientAction, playerId: st
         }
         if (player.money < 0) {
           player.isBankrupt = true;
-          logEvent(draft, `${player.nickname} đã phá sản do không đủ tiền trả phí thẻ!`, 'bankrupt', playerId);
+          const rc = releasePlayerProperties(draft, player.id);
+          logEvent(draft, `${player.nickname} đã phá sản do không đủ tiền trả phí thẻ! ${rc} ô đất được trả về Ngân Hàng.`, 'bankrupt', playerId);
         }
         nextPlayer(draft);
         return draft;
@@ -809,6 +816,8 @@ export function gameReducer(state: GameState, action: ClientAction, playerId: st
             player.money += amt;
             if (otherP.money < 0) {
               otherP.isBankrupt = true;
+              const rc = releasePlayerProperties(draft, otherP.id);
+              logEvent(draft, `${otherP.nickname} đã phá sản! ${rc} ô đất được trả về Ngân Hàng.`, 'bankrupt', otherP.id);
             }
           }
         });
@@ -827,7 +836,8 @@ export function gameReducer(state: GameState, action: ClientAction, playerId: st
         });
         if (player.money < 0) {
           player.isBankrupt = true;
-          logEvent(draft, `${player.nickname} đã phá sản do không đủ tiền khao bạn bè!`, 'bankrupt', playerId);
+          const rc = releasePlayerProperties(draft, player.id);
+          logEvent(draft, `${player.nickname} đã phá sản do không đủ tiền khao bạn bè! ${rc} ô đất được trả về Ngân Hàng.`, 'bankrupt', playerId);
         }
         nextPlayer(draft);
         return draft;
@@ -854,7 +864,8 @@ export function gameReducer(state: GameState, action: ClientAction, playerId: st
         
         if (player.money < 0) {
           player.isBankrupt = true;
-          logEvent(draft, `${player.nickname} đã phá sản do không đủ tiền bảo trì bất động sản!`, 'bankrupt', playerId);
+          const rc = releasePlayerProperties(draft, player.id);
+          logEvent(draft, `${player.nickname} đã phá sản do không đủ tiền bảo trì bất động sản! ${rc} ô đất được trả về Ngân Hàng.`, 'bankrupt', playerId);
         }
         nextPlayer(draft);
         return draft;
